@@ -1,4 +1,5 @@
 import { defineComponent } from 'vue'
+import { RouterLink } from 'vue-router'
 
 export const TopNav = defineComponent({
   name: 'TopNav',
@@ -7,14 +8,14 @@ export const TopNav = defineComponent({
       <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           {/* Logo / Brand */}
-          <div class="flex items-center gap-2">
+          <RouterLink to="/" class="flex items-center gap-2">
             <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">
               Q&A
             </div>
             <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 hidden sm:block">
               问答社区
             </span>
-          </div>
+          </RouterLink>
 
           {/* Search Bar */}
           <div class="flex-1 max-w-lg mx-4">
@@ -33,7 +34,15 @@ export const TopNav = defineComponent({
           </div>
 
           {/* Right Actions */}
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 text-sm">
+            <RouterLink 
+              to="/ask" 
+              class="hidden sm:flex items-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-4 py-1.5 rounded-full font-medium transition-colors border border-blue-100"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+              提问
+            </RouterLink>
+
             {/* Notifications */}
             <button class="relative p-2 text-gray-500 hover:text-blue-600 transition-colors rounded-full hover:bg-blue-50">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
