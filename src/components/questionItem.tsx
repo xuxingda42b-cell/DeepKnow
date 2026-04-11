@@ -1,4 +1,5 @@
 import { defineComponent, type PropType } from 'vue'
+import { RouterLink } from 'vue-router'
 import type { Question } from '../data/questions'
 
 export const QuestionItem = defineComponent({
@@ -14,7 +15,7 @@ export const QuestionItem = defineComponent({
       const { question } = props
       
       return (
-        <article class="p-4 bg-white hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0 group cursor-pointer">
+        <RouterLink to={`/question/${question.id}`} class="block p-4 bg-white hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0 group cursor-pointer">
           {/* Header Metas */}
           <div class="flex items-center text-xs text-gray-500 mb-2 gap-2">
             <span class="font-medium text-blue-600 hover:text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded cursor-pointer transition-colors">
@@ -82,7 +83,7 @@ export const QuestionItem = defineComponent({
               </div>
             </div>
           </div>
-        </article>
+        </RouterLink>
       )
     }
   }

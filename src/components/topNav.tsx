@@ -8,8 +8,8 @@ export const TopNav = defineComponent({
         <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           {/* Logo / Brand */}
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">
-              Q
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">
+              Q&A
             </div>
             <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 hidden sm:block">
               问答社区
@@ -24,9 +24,9 @@ export const TopNav = defineComponent({
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
               </div>
-              <input 
-                type="text" 
-                placeholder="搜索问题、话题或用户..." 
+              <input
+                type="text"
+                placeholder="搜索问题、话题或用户..."
                 class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
               />
             </div>
@@ -41,12 +41,12 @@ export const TopNav = defineComponent({
               </svg>
               <span class="absolute top-1 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
             </button>
-            
+
             {/* Avatar */}
-            <img 
-              class="h-8 w-8 rounded-full border border-gray-200 cursor-pointer object-cover hover:ring-2 hover:ring-blue-500 hover:ring-offset-2 transition-all" 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=User" 
-              alt="User avatar" 
+            <img
+              class="h-8 w-8 rounded-full border border-gray-200 cursor-pointer object-cover hover:ring-2 hover:ring-blue-500 hover:ring-offset-2 transition-all"
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=User"
+              alt="User avatar"
             />
           </div>
         </div>

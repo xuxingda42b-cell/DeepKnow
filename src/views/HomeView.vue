@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { TopNav } from '../components/topNav'
 import { TheTab } from '../components/theTab'
 import { QuestionItem } from '../components/questionItem'
 import { questionsData } from '../data/questions'
@@ -14,26 +13,25 @@ const handleTabChange = (tab: string) => {
 const getQuestionsByTab = () => {
   // Demo filter logic
   if (currentTab.value === '最新') {
-    return [...questionsData].reverse()
+    return questionsData
   } else if (currentTab.value === '热门') {
     return [...questionsData].sort((a, b) => b.viewsCount - a.viewsCount)
   }
-  return questionsData
+  return [...questionsData].reverse()
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
-    <TopNav />
+  <div class="flex flex-col w-full animate-fade-in">
     <TheTab @change="handleTabChange" />
-    
-    <main class="flex-1 w-full max-w-4xl mx-auto p-4 py-6">
+
+    <main class="flex-1 w-full p-4 py-6">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <template v-if="getQuestionsByTab().length > 0">
-          <QuestionItem 
-            v-for="question in getQuestionsByTab()" 
-            :key="question.id" 
-            :question="question" 
+          <QuestionItem
+            v-for="question in getQuestionsByTab()"
+            :key="question.id"
+            :question="question"
           />
         </template>
         <template v-else>
