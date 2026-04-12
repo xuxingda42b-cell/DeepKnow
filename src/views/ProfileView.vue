@@ -19,9 +19,9 @@
             </div>
           </div>
           
-          <button class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors shadow-sm text-sm">
+          <router-link to="/profile/edit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors shadow-sm text-sm inline-block">
             编辑资料
-          </button>
+          </router-link>
         </div>
 
         <!-- 统计数据 -->
