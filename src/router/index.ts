@@ -21,6 +21,11 @@ const router = createRouter({
           path: 'ask',
           name: 'ask-question',
           component: () => import('../views/AskQuestionView.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('../views/ProfileView.vue'),
         }
       ]
     },

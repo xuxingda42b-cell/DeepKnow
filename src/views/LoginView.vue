@@ -77,7 +77,7 @@ const errorMessage = ref('')
 
 const handleLogin = () => {
   const users = getUsers()
-  const matchLocalUser = users.find((u: any) => u.account === account.value && u.pass === password.value)
+  const matchLocalUser = users.find((u: { account: string; pass: string }) => u.account === account.value && u.pass === password.value)
 
   if ((account.value === 'admin123' && password.value === '123456') || matchLocalUser) {
     login()

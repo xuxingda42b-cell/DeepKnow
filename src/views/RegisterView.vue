@@ -102,8 +102,8 @@ const handleRegister = () => {
     // 注册完成后自动登录
     login()
     router.push('/')
-  } catch(error: any) {
-    errorMessage.value = error.message
+  } catch(error) {
+    errorMessage.value = error instanceof Error ? error.message : String(error)
   }
 }
 </script>
