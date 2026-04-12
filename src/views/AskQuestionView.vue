@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { questionsData } from '../data/questions'
 
@@ -41,6 +41,12 @@ const suggestedQuestions = computed(() => {
 const isStep1Valid = computed(() => title.value.trim().length >= 5)
 const isStep2Valid = computed(() => description.value.trim().replace(/>>>.*?<<</g, '').length > 20)
 const isStep3Valid = computed(() => selectedTags.value.length > 0)
+
+const handleBlur = () => {
+  setTimeout(() => {
+    titleFocused.value = false
+  }, 200)
+}
 
 const nextStep = () => {
   if (currentStep.value === 1 && !isStep1Valid.value) return
@@ -127,7 +133,7 @@ const submitQuestion = () => {
               <input 
                 v-model="title"
                 @focus="titleFocused = true"
-                @blur="setTimeout(() => titleFocused = false, 200)"
+                @blur="handleBlur"
                 type="text" 
                 placeholder="例如：Vue 3 Setup 语法糖中如何动态获取 ref 引用？"
                 class="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all transition-colors"

@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+
+const parseMarkdown = (raw: string) => {
+  // Try turning on breaks for standard GitHub flavored markdown feel
+  marked.setOptions({ breaks: true })
+  return DOMPurify.sanitize(marked.parse(raw) as string)
+}
 
 const route = useRoute()
 const questionId = route.params.id
@@ -72,7 +80,7 @@ const sortedAnswers = computed(() => {
   })
 })
 
-const handleVote = (answer: any, type: 1 | -1) => {
+const handleVote = (answer: { points: number; userVoted: number }, type: 1 | -1) => {
   if (answer.userVoted === type) {
     // Cancel vote
     answer.points -= type
@@ -107,7 +115,7 @@ const submitAnswer = () => {
   answers.value.push({
     id: Date.now(),
     author: { name: '我', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
-    content: `<p>${answerContent.value.replace(/\n/g, '<br/>')}</p>`,
+    content: answerContent.value,
     points: 0,
     isAccepted: false,
     createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
@@ -151,7 +159,7 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
         </div>
 
         <!-- Question Body (Rich Text Content) -->
-        <div class="prose max-w-none text-slate-800 leading-relaxed text-[15px] mb-8" v-html="question.content"></div>
+        <div class="prose max-w-none text-slate-800 leading-relaxed text-[15px] mb-8 break-words" v-html="parseMarkdown(question.content)"></div>
 
         <!-- Action Bar -->
         <div class="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4">
@@ -242,7 +250,7 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
             </div>
 
             <!-- Content (Rich Text) -->
-            <div class="prose prose-sm sm:prose max-w-none text-slate-700 leading-relaxed text-[15px] mb-4 prose-pre:bg-slate-800 prose-pre:text-slate-100 prose-pre:rounded-lg prose-p:mb-3" v-html="answer.content"></div>
+            <div class="prose prose-sm sm:prose max-w-none text-slate-700 leading-relaxed text-[15px] mb-4 break-words prose-pre:bg-slate-800 prose-pre:text-slate-100 prose-pre:rounded-lg prose-p:mb-3" v-html="parseMarkdown(answer.content)"></div>
 
             <!-- Bottom Actions -->
             <div class="flex items-center gap-4 text-sm text-slate-500 pt-3 flex-wrap">
@@ -312,12 +320,28 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
 }
 
 /* Custom styling for rich text mockup */
+:deep(.prose) {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
 :deep(.prose) pre {
   margin: 1em 0;
   padding: 1em;
   border-radius: 0.5rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  max-width: 100%;
+}
+:deep(.prose) p, :deep(.prose) h1, :deep(.prose) h2, :deep(.prose) h3, :deep(.prose) h4, :deep(.prose) h5, :deep(.prose) h6 {
+  word-break: break-word;
+}
+:deep(.prose) img {
+  max-width: 100%;
+  height: auto;
 }
 :deep(.prose) code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  word-break: break-word;
 }
 </style>
