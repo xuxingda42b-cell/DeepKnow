@@ -8,8 +8,10 @@ export const TopNav = defineComponent({
     const router = useRouter()
     
     const handleLogout = () => {
-      logout()
-      router.push('/')
+      if (window.confirm('确定要退出登录吗？')) {
+        logout()
+        router.push('/')
+      }
     }
 
     return () => (

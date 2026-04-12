@@ -42,7 +42,7 @@ const getQuestionsByTab = () => {
           立即登录
         </router-link>
         <router-link 
-          to="/login"
+          to="/register"
           class="bg-white border hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-medium transition"
         >
           注册新账号

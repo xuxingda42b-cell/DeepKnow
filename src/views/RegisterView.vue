@@ -13,30 +13,39 @@
           <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30">
             Q&A
           </div>
-          <h2 class="text-2xl font-bold text-gray-900">欢迎来到问答社区</h2>
-          <p class="text-gray-500 mt-2 text-sm">登录或注册以继续与大家交流</p>
+          <h2 class="text-2xl font-bold text-gray-900">注册新账号</h2>
+          <p class="text-gray-500 mt-2 text-sm">加入问答社区，开启您的技术之旅</p>
         </div>
 
-        <form @submit.prevent="handleLogin" class="space-y-5">
+        <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">邮箱或用户名</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">用户名或邮箱</label>
             <input 
               v-model="account"
               type="text" 
               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white"
-              placeholder="请输入您的账号 (测试账号: admin123)"
+              placeholder="请设置您的账号"
+              required
             />
           </div>
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-sm font-medium text-gray-700">密码</label>
-              <a href="#" class="text-sm text-blue-600 hover:text-blue-700 hover:underline">忘记密码？</a>
-            </div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
             <input 
               v-model="password"
               type="password" 
               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white"
-              placeholder="请输入密码 (测试密码: 123456)"
+              placeholder="请设置密码"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+            <input 
+              v-model="confirmPassword"
+              type="password" 
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white"
+              placeholder="请再次输入密码"
+              required
             />
           </div>
 
@@ -46,19 +55,19 @@
 
           <button 
             type="submit"
-            class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.98]"
+            class="w-full py-3 px-4 mt-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.98]"
           >
-            登录
+            注册并自动登录
           </button>
         </form>
 
         <div class="mt-8 relative flex items-center justify-center">
           <div class="absolute inset-x-0 h-px bg-gray-100"></div>
-          <span class="relative bg-white px-4 text-sm text-gray-400">还没有账号？</span>
+          <span class="relative bg-white px-4 text-sm text-gray-400">已有账号？</span>
         </div>
 
-        <router-link to="/register" class="mt-6 flex justify-center w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2">
-          注册新账号
+        <router-link to="/login" class="mt-6 flex justify-center w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2">
+          返回登录
         </router-link>
       </div>
     </div>
@@ -73,14 +82,21 @@ import { login } from '../store/user'
 const router = useRouter()
 const account = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const errorMessage = ref('')
 
-const handleLogin = () => {
-  if (account.value === 'admin123' && password.value === '123456') {
-    login()
-    router.push('/')
-  } else {
-    errorMessage.value = '账号或密码不正确，请尝试 admin123 / 123456'
+const handleRegister = () => {
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = '两次输入的密码不一致！'
+    return
   }
+  if (account.value.length < 3) {
+    errorMessage.value = '账号长度不能少于3个字符！'
+    return
+  }
+  
+  // 模拟注册并自动持久化登录
+  login()
+  router.push('/')
 }
 </script>
