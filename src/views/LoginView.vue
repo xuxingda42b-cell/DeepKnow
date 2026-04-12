@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { login } from '../store/user'
+import { login, getUsers } from '../store/user'
 
 const router = useRouter()
 const account = ref('')
@@ -76,11 +76,14 @@ const password = ref('')
 const errorMessage = ref('')
 
 const handleLogin = () => {
-  if (account.value === 'admin123' && password.value === '123456') {
+  const users = getUsers()
+  const matchLocalUser = users.find((u: any) => u.account === account.value && u.pass === password.value)
+
+  if ((account.value === 'admin123' && password.value === '123456') || matchLocalUser) {
     login()
     router.push('/')
   } else {
-    errorMessage.value = '账号或密码不正确，请尝试 admin123 / 123456'
+    errorMessage.value = '账号或密码不正确，请尝试 admin123 或是您刚才注册的账号'
   }
 }
 </script>

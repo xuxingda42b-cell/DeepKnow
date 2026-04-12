@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { login } from '../store/user'
+import { login, registerUser } from '../store/user'
 
 const router = useRouter()
 const account = ref('')
@@ -95,8 +95,15 @@ const handleRegister = () => {
     return
   }
   
-  // 模拟注册并自动持久化登录
-  login()
-  router.push('/')
+  try {
+    // 写入 localStorage
+    registerUser(account.value, password.value)
+    
+    // 注册完成后自动登录
+    login()
+    router.push('/')
+  } catch(error: any) {
+    errorMessage.value = error.message
+  }
 }
 </script>
