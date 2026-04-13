@@ -16,9 +16,10 @@
           
           <!-- 头像上传区 -->
           <div class="flex items-center gap-6 pb-6 border-b border-gray-50">
-            <div class="relative group cursor-pointer">
+            <div class="relative group cursor-pointer" @click="triggerFileInput">
+              <input type="file" ref="fileInputRef" accept="image/*" class="hidden" @change="handleFileChange" />
               <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" 
+                :src="formData.avatarUrl" 
                 alt="User Avatar" 
                 class="w-20 h-20 rounded-full border border-gray-200 bg-gray-50 object-cover group-hover:opacity-80 transition-opacity"
               />
@@ -37,12 +38,12 @@
             
             <div class="col-span-1 sm:col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">一句话简介</label>
-              <input type="text" placeholder="简单介绍一下你自己..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.bio" type="text" placeholder="简单介绍一下你自己..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">性别</label>
-              <select class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm">
+              <select v-model="formData.gender" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm">
                 <option value="none">保密</option>
                 <option value="male">男</option>
                 <option value="female">女</option>
@@ -51,7 +52,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">生日</label>
-              <input type="date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.birthday" type="date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
             <div class="col-span-1 sm:col-span-2 pt-2 pb-1">
@@ -60,12 +61,12 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
-              <input type="tel" placeholder="您的手机号码" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.phone" type="tel" placeholder="您的手机号码" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">邮箱地址</label>
-              <input type="email" placeholder="example@email.com" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.email" type="email" placeholder="example@email.com" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
             
             <div class="col-span-1 sm:col-span-2 pt-2 pb-1">
@@ -74,7 +75,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">最高学历</label>
-              <select class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm">
+              <select v-model="formData.education" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm">
                 <option value="">请选择...</option>
                 <option value="highschool">高中及以下</option>
                 <option value="associate">大专</option>
@@ -86,17 +87,17 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">毕业院校</label>
-              <input type="text" placeholder="您就读的学校" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.school" type="text" placeholder="您就读的学校" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">专业</label>
-              <input type="text" placeholder="主修专业" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.major" type="text" placeholder="主修专业" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">GitHub 主页</label>
-              <input type="url" placeholder="https://github.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.github" type="url" placeholder="https://github.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
           </div>
@@ -117,12 +118,63 @@
 </template>
 
 <script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+const formData = reactive({
+  avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
+  bio: '',
+  gender: 'none',
+  birthday: '',
+  phone: '',
+  email: '',
+  education: '',
+  school: '',
+  major: '',
+  github: ''
+})
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+onMounted(() => {
+  const savedData = localStorage.getItem('profile_data')
+  if (savedData) {
+    try {
+      Object.assign(formData, JSON.parse(savedData))
+    } catch (e) {
+      console.error('Failed to parse profile data', e)
+    }
+  }
+})
+
+const triggerFileInput = () => {
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    if (file.size > 2 * 1024 * 1024) {
+      alert('头像文件大小不能超过 2MB')
+      return
+    }
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formData.avatarUrl = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 const handleSave = () => {
-  // 模拟保存动作，然后返回上一页
+  // 保存动作
+  localStorage.setItem('profile_data', JSON.stringify(formData))
   alert('资料更新成功！')
   router.push('/profile')
 }

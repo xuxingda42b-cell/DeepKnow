@@ -1,12 +1,27 @@
-import { defineComponent } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { defineComponent, ref, watch } from 'vue'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { isLoggedIn, logout } from '../store/user'
 
 export const TopNav = defineComponent({
   name: 'TopNav',
   setup() {
     const router = useRouter()
+    const route = useRoute()
     
+    const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=Admin')
+    
+    const updateAvatar = () => {
+      const savedData = localStorage.getItem('profile_data')
+      if (savedData) {
+        try {
+          avatarUrl.value = JSON.parse(savedData).avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
+        } catch (e) {}
+      }
+    }
+    
+    updateAvatar()
+    watch(() => route.path, updateAvatar)
+
     const handleLogout = () => {
       if (window.confirm('确定要退出登录吗？')) {
         logout()
@@ -67,7 +82,7 @@ export const TopNav = defineComponent({
                 <div class="relative group py-2 flex items-center">
                   <img
                     class="h-8 w-8 rounded-full border border-gray-200 cursor-pointer object-cover group-hover:ring-2 group-hover:ring-blue-500 group-hover:ring-offset-2 transition-all bg-gray-50 ml-1"
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
+                    src={avatarUrl.value}
                     alt="Admin avatar"
                   />
                   
