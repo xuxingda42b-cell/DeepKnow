@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { questionsData } from '../data/questions'
+import { myQuestions, addQuestion } from '../store/questions'
 
 const router = useRouter()
 
@@ -34,7 +34,7 @@ const titleFocused = ref(false)
 const suggestedQuestions = computed(() => {
   if (!title.value.trim()) return []
   const keyword = title.value.trim().toLowerCase()
-  return questionsData.filter(q => q.title.toLowerCase().includes(keyword)).slice(0, 3)
+  return myQuestions.value.filter(q => q.title.toLowerCase().includes(keyword)).slice(0, 3)
 })
 
 // Validation
@@ -70,9 +70,38 @@ const toggleTag = (tag: string) => {
 
 const submitQuestion = () => {
   if (!isStep3Valid.value) return
-  // Mock submitting
-  alert('问题发布成功！即将跳转到详情页...')
-  router.push('/') // Or redirect to fresh detail page
+  
+  // Real submit logic
+  const newQuestion = {
+    id: Date.now().toString(),
+    title: title.value.trim(),
+    description: description.value.trim(),
+    tags: selectedTags.value.map(tag => ({ name: tag, color: 'bg-blue-100 text-blue-700' })), // basic color
+    author: {
+      name: '我', // We could fetch from Profile string
+      avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200'
+    },
+    time: '刚刚',
+    category: '技术问答',
+    answersCount: 0,
+    viewsCount: 0,
+    isResolved: false
+  }
+
+  // Use stored profile data if available
+  const savedData = localStorage.getItem('profile_data')
+  if (savedData) {
+    try {
+      const p = JSON.parse(savedData)
+      newQuestion.author.name = p.name || '我'
+      newQuestion.author.avatar = p.avatarUrl || newQuestion.author.avatar
+    } catch {}
+  }
+
+  addQuestion(newQuestion)
+  
+  alert('问题发布成功！即将跳转到首页...')
+  router.push('/')
 }
 </script>
 

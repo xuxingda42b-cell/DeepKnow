@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { TheTab } from '../components/theTab'
 import { QuestionItem } from '../components/questionItem'
-import { questionsData } from '../data/questions'
+import { myQuestions } from '../store/questions'
 import { isLoggedIn } from '../store/user'
 
 const route = useRoute()
@@ -16,7 +16,7 @@ const handleTabChange = (tab: string) => {
 }
 
 const getQuestionsByTab = () => {
-  let list = questionsData
+  let list = myQuestions.value
 
   if (queryStr.value) {
     const qlower = queryStr.value.toLowerCase()
