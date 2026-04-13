@@ -23,7 +23,7 @@ interface Comment {
 }
 
 const route = useRoute()
-const questionId = route.params.id
+const questionId = route.params.id as string
 
 // Mock Question Data
 const question = ref({

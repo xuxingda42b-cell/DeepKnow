@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { myCollections, removeCollection } from '../store/collections'
+import { myCollections, removeCollection, type CollectionItem } from '../store/collections'
 
 const filterType = ref('all')
 
@@ -125,7 +125,7 @@ const filteredCollections = computed(() => {
   return myCollections.value.filter(c => c.type === t)
 })
 
-const handleRemove = (item: any) => {
+const handleRemove = (item: CollectionItem) => {
   if (window.confirm('确定要取消收藏吗？')) {
     removeCollection(item.id, item.type)
   }

@@ -39,7 +39,6 @@ const sendMessage = async () => {
   // Add streaming placeholder for assistant
   const assistantMsg: Message = { role: 'assistant', content: '', streaming: true }
   messages.value.push(assistantMsg)
-  const msgIdx = messages.value.length - 1
 
   try {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -79,18 +78,18 @@ const sendMessage = async () => {
           const parsed = JSON.parse(data)
           const delta = parsed.choices?.[0]?.delta?.content
           if (delta) {
-            messages.value[msgIdx].content += delta
+            assistantMsg.content += delta
             scrollToBottom()
           }
         } catch {}
       }
     }
 
-    messages.value[msgIdx].streaming = false
+    assistantMsg.streaming = false
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : '请求失败'
-    messages.value[msgIdx].content = `❌ 抱歉，请求出错：${errorMsg}\n\n请确认 DeepSeek API Key 是否正确配置（在 .env 文件中设置 VITE_DEEPSEEK_API_KEY）。`
-    messages.value[msgIdx].streaming = false
+    assistantMsg.content = `❌ 抱歉，请求出错：${errorMsg}\n\n请确认 DeepSeek API Key 是否正确配置（在 .env 文件中设置 VITE_DEEPSEEK_API_KEY）。`
+    assistantMsg.streaming = false
   } finally {
     isLoading.value = false
     scrollToBottom()
