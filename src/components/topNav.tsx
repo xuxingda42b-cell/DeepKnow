@@ -97,7 +97,7 @@ export const TopNav = defineComponent({
                       <RouterLink to="/messages" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
                         我的消息
                       </RouterLink>
-                      <RouterLink to="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
+                      <RouterLink to="/collections" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
                         我的收藏
                       </RouterLink>
                       <div class="h-px bg-gray-100 my-1"></div>
