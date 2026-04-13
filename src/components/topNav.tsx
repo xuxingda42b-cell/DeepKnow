@@ -7,9 +7,9 @@ export const TopNav = defineComponent({
   setup() {
     const router = useRouter()
     const route = useRoute()
-    
+
     const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=Admin')
-    
+
     const updateAvatar = () => {
       const savedData = localStorage.getItem('profile_data')
       if (savedData) {
@@ -20,7 +20,7 @@ export const TopNav = defineComponent({
         }
       }
     }
-    
+
     updateAvatar()
     watch(() => route.path, updateAvatar)
 
@@ -34,15 +34,28 @@ export const TopNav = defineComponent({
     return () => (
       <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          {/* Logo / Brand */}
-          <RouterLink to="/" class="flex items-center gap-2">
-            <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">
-              Q&A
+          {/* Logo / Brand & Nav Links */}
+          <div class="flex items-center gap-4 sm:gap-8">
+            <div class="flex items-center gap-2">
+              <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl shadow-sm">
+                Q&A
+              </div>
+              <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 hidden sm:block tracking-tight">
+                问答社区
+              </span>
             </div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 hidden sm:block">
-              问答社区
-            </span>
-          </RouterLink>
+
+            {/* Main Navigation */}
+            <nav class="hidden md:flex items-center gap-1">
+              <RouterLink
+                to="/"
+                exactActiveClass="text-blue-700 bg-blue-50 font-semibold"
+                class="px-4 py-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-[15px] font-medium"
+              >
+                首页
+              </RouterLink>
+            </nav>
+          </div>
 
           {/* Search Bar */}
           <div class="flex-1 max-w-lg mx-4">
@@ -64,8 +77,8 @@ export const TopNav = defineComponent({
           <div class="flex items-center gap-4 text-sm">
             {isLoggedIn.value ? (
               <>
-                <RouterLink 
-                  to="/ask" 
+                <RouterLink
+                  to="/ask"
                   class="hidden sm:flex items-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-4 py-1.5 rounded-full font-medium transition-colors border border-blue-100"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
@@ -87,7 +100,7 @@ export const TopNav = defineComponent({
                     src={avatarUrl.value}
                     alt="Admin avatar"
                   />
-                  
+
                   {/* Invisible bridge to keep hover active between avatar and menu */}
                   <div class="absolute top-[32px] right-0 w-full h-4"></div>
 
@@ -103,7 +116,7 @@ export const TopNav = defineComponent({
                         我的收藏
                       </RouterLink>
                       <div class="h-px bg-gray-100 my-1"></div>
-                      <button 
+                      <button
                         onClick={handleLogout}
                         class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
                       >

@@ -100,7 +100,7 @@
               </div>
 
               <!-- 右侧操作区：取消收藏按钮 -->
-              <button class="relative z-10 text-gray-300 hover:text-red-500 p-2.5 rounded-full hover:bg-red-50 transition-all group/btn shrink-0 focus:outline-none" title="取消收藏">
+              <button @click.prevent.stop="handleRemove(item)" class="relative z-10 text-gray-300 hover:text-red-500 p-2.5 rounded-full hover:bg-red-50 transition-all group/btn shrink-0 focus:outline-none" title="取消收藏">
                 <svg class="w-6 h-6 fill-blue-500 text-blue-500 group-hover/btn:fill-red-50 group-hover/btn:stroke-red-500 group-hover/btn:text-red-500 transition-colors" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                 </svg>
@@ -115,48 +115,19 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { myCollections, removeCollection } from '../store/collections'
 
 const filterType = ref('all')
 
-const collections = [
-  {
-    id: 1,
-    type: 'question',
-    title: 'Vue3 中的 Composition API 最佳实践是什么？',
-    summary: '最近在做团队的 Vue 2 到 Vue 3 迁移，大家对于 setup() 里面到底应该怎么组织代码有很大分歧，想了解一下目前社区里比较推荐的做法是什么？特别是跨组件服用逻辑抽离的界限在哪？',
-    tags: ['Vue.js', '前端架构', '最佳实践'],
-    author: '前端老兵',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vue',
-    stats: '15 回答 · 128 赞',
-    savedAt: '昨天 15:30'
-  },
-  {
-    id: 2,
-    type: 'article',
-    title: '2024年值得关注的 10 个前端开源项目预看',
-    summary: '在这个日新月异的技术圈，前端工具链又迎来了一波大更新。本文将盘点最近在 GitHub 上爆火的，能切实提升生产效率的开源项目库。',
-    tags: ['开源生态', '工具链'],
-    author: '框架爱好者',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tech',
-    stats: '阅读量 2.1w · 456 赞',
-    savedAt: '3天前'
-  },
-  {
-    id: 3,
-    type: 'question',
-    title: '如何优雅地处理大型业务中极度复杂的表单校验？',
-    summary: '遇到一个大概有 50 多个字段，分布在 4 个 Tab 页，部分字段显示隐藏产生联动影响的超级复杂业务表单。目前代码全部耦合在一起，维护非常痛苦。各位大佬是怎么解耦的？',
-    tags: ['JavaScript', '表单', '架构设计'],
-    author: 'Code Ninja',
-    authorAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja',
-    stats: '24 回答 · 89 赞',
-    savedAt: '2024-03-10'
-  }
-]
-
 const filteredCollections = computed(() => {
-  if (filterType.value === 'all') return collections
+  if (filterType.value === 'all') return myCollections.value
   const t = filterType.value === 'questions' ? 'question' : 'article'
-  return collections.filter(c => c.type === t)
+  return myCollections.value.filter(c => c.type === t)
 })
+
+const handleRemove = (item: any) => {
+  if (window.confirm('确定要取消收藏吗？')) {
+    removeCollection(item.id, item.type)
+  }
+}
 </script>

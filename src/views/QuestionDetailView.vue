@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
+import { isCollected, addCollection, removeCollection } from '../store/collections'
 
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
@@ -176,6 +177,29 @@ const submitAnswer = () => {
 
 // Utility formatting
 const formatDate = (dateStr: string) => dateStr.slice(0, 16)
+
+// Collection state
+const hasCollected = computed(() => isCollected(question.value.id, 'question'))
+
+const toggleCollect = () => {
+  if (hasCollected.value) {
+    removeCollection(question.value.id, 'question')
+  } else {
+    // 提取纯文本摘要
+    const plainText = question.value.content.replace(/<[^>]*>?/gm, '').trim()
+    addCollection({
+      id: question.value.id,
+      type: 'question',
+      title: question.value.title,
+      summary: plainText.slice(0, 120) + (plainText.length > 120 ? '...' : ''),
+      tags: question.value.tags,
+      author: question.value.author.name,
+      authorAvatar: question.value.author.avatar,
+      stats: `${answers.value.length} 回答 · ${question.value.readCount} 阅读`,
+      savedAt: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })
+    })
+  }
+}
 </script>
 
 <template>
@@ -222,9 +246,13 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
               分享
             </button>
-            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors hover:text-amber-500">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-              收藏
+            <button 
+              @click="toggleCollect"
+               class="flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors"
+              :class="hasCollected ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'hover:bg-gray-100 hover:text-amber-500'"
+            >
+              <svg class="w-4 h-4" :fill="hasCollected ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+              {{ hasCollected ? '已收藏' : '收藏' }}
             </button>
             <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" /></svg>
