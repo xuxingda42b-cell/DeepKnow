@@ -5,6 +5,7 @@ import { TheTab } from '../components/theTab'
 import { QuestionItem } from '../components/questionItem'
 import { myQuestions } from '../store/questions'
 import { isLoggedIn } from '../store/user'
+import AiAssistant from '../components/AiAssistant.vue'
 
 const route = useRoute()
 const currentTab = ref('推荐')
@@ -76,10 +77,11 @@ const getQuestionsByTab = () => {
       </div>
     </div>
 
-    <!-- 登录态：完整的问答时间流 -->
+    <!-- 登录态：完整的问答时间流 + AI 助手 -->
     <template v-else>
       <TheTab @change="handleTabChange" />
 
+      <!-- Question Feed (full width) -->
       <main class="flex-1 w-full p-4 py-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <template v-if="getQuestionsByTab().length > 0">
@@ -101,6 +103,11 @@ const getQuestionsByTab = () => {
           </template>
         </div>
       </main>
+
+      <!-- AI Assistant: fixed panel outside the content flow -->
+      <aside class="fixed right-4 top-16 bottom-4 w-80 hidden xl:flex flex-col z-40">
+        <AiAssistant />
+      </aside>
     </template>
   </div>
 </template>
