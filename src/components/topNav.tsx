@@ -15,7 +15,9 @@ export const TopNav = defineComponent({
       if (savedData) {
         try {
           avatarUrl.value = JSON.parse(savedData).avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
-        } catch (e) {}
+        } catch (e) {
+          console.error('Failed to parse profile data:', e)
+        }
       }
     }
     

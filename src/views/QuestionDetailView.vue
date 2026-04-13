@@ -1,13 +1,24 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
+import * as markedPkg from 'marked'
+import * as DOMPurifyPkg from 'dompurify'
+
+const marked = markedPkg.marked || markedPkg
+const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
 const parseMarkdown = (raw: string) => {
-  // Try turning on breaks for standard GitHub flavored markdown feel
-  marked.setOptions({ breaks: true })
-  return DOMPurify.sanitize(marked.parse(raw) as string)
+  if (!raw) return ''
+  // marked.parse may return a promise in some configurations, but defaults to string.
+  return DOMPurify.sanitize(marked.parse(raw, { breaks: true, gfm: true }) as string)
+}
+
+// 评论类型
+interface Comment {
+  id: number
+  author: { name: string; avatar: string }
+  content: string
+  createdAt: string
 }
 
 const route = useRoute()
@@ -48,7 +59,21 @@ const answers = ref([
     points: 156,
     isAccepted: true,
     createdAt: '2026-04-10 11:30:00',
-    userVoted: 0, // 1 for upvote, -1 for downvote
+    userVoted: 0,
+    comments: [
+      {
+        id: 101,
+        author: { name: '好奇宝宝', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Curious&scale=200' },
+        content: '请问这样的 Store 模式在 **SSR** 下有什么坑吗？',
+        createdAt: '2026-04-10 13:00:00',
+      },
+      {
+        id: 102,
+        author: { name: '尤大粉', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Evan&scale=200' },
+        content: 'SSR 下单例会造成跨请求污染，需要用工厂函数 `createStore()` 搭配 `provide`。',
+        createdAt: '2026-04-10 13:20:00',
+      },
+    ] as Comment[],
   },
   {
     id: 2,
@@ -58,6 +83,7 @@ const answers = ref([
     isAccepted: false,
     createdAt: '2026-04-10 12:15:00',
     userVoted: 0,
+    comments: [] as Comment[],
   },
   {
     id: 3,
@@ -66,9 +92,31 @@ const answers = ref([
     points: -2,
     isAccepted: false,
     createdAt: '2026-04-10 14:00:00',
-    userVoted: -1, // current user downvoted
+    userVoted: -1,
+    comments: [] as Comment[],
   }
 ])
+
+// 评论区展开状态：key 为 answerId
+const expandedComments = ref<Record<number, boolean>>({})
+// 每个回答的评论输入内容
+const commentInputs = ref<Record<number, string>>({})
+
+const toggleComments = (answerId: number) => {
+  expandedComments.value[answerId] = !expandedComments.value[answerId]
+}
+
+const submitComment = (answer: (typeof answers.value)[0]) => {
+  const text = (commentInputs.value[answer.id] ?? '').trim()
+  if (!text) return
+  answer.comments.push({
+    id: Date.now(),
+    author: { name: '我', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
+    content: text,
+    createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+  })
+  commentInputs.value[answer.id] = ''
+}
 
 // Sort Answers: Accepted -> Points Descending -> Chronological
 const sortedAnswers = computed(() => {
@@ -120,6 +168,7 @@ const submitAnswer = () => {
     isAccepted: false,
     createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
     userVoted: 0,
+    comments: [] as Comment[],
   })
   answerContent.value = ''
   showEditor.value = false
@@ -254,9 +303,12 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
 
             <!-- Bottom Actions -->
             <div class="flex items-center gap-4 text-sm text-slate-500 pt-3 flex-wrap">
-              <button class="flex items-center gap-1 hover:text-blue-600 transition-colors">
+              <button
+                class="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                @click="toggleComments(answer.id)"
+              >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                添加评论
+                {{ answer.comments.length > 0 ? `${answer.comments.length} 条评论` : '添加评论' }}
               </button>
               <button class="flex items-center gap-1 hover:text-slate-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
@@ -266,6 +318,62 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" /></svg>
                 举报
               </button>
+            </div>
+
+            <!-- 评论区 -->
+            <div
+              v-if="expandedComments[answer.id]"
+              class="mt-3 border-t border-slate-100 pt-3 space-y-3 comment-section"
+            >
+              <!-- 已有评论列表 -->
+              <div
+                v-for="comment in answer.comments"
+                :key="comment.id"
+                class="flex gap-2.5 group"
+              >
+                <img
+                  :src="comment.author.avatar"
+                  alt="avatar"
+                  class="w-6 h-6 rounded-full border border-gray-100 bg-gray-50 shrink-0 mt-0.5"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-xs font-semibold text-slate-700 shrink-0">{{ comment.author.name }}</span>
+                    <span class="text-[11px] text-slate-400 shrink-0">{{ formatDate(comment.createdAt) }}</span>
+                  </div>
+                  <!-- 评论内容支持 Markdown/HTML 渲染 -->
+                  <div
+                    class="text-xs text-slate-600 comment-prose mt-0.5"
+                    v-html="parseMarkdown(comment.content)"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 无评论提示 -->
+              <p v-if="answer.comments.length === 0" class="text-xs text-slate-400 italic">暂无评论，快来抢沙发～</p>
+
+              <!-- 评论输入框 -->
+              <div class="flex gap-2 pt-1">
+                <img
+                  src="https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200"
+                  alt="me"
+                  class="w-6 h-6 rounded-full border border-gray-100 bg-gray-50 shrink-0 mt-1"
+                />
+                <div class="flex-1 flex gap-2">
+                  <input
+                    v-model="commentInputs[answer.id]"
+                    type="text"
+                    placeholder="添加评论... 支持 Markdown"
+                    class="flex-1 text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 bg-white placeholder-slate-400 text-slate-700 transition"
+                    @keydown.enter="submitComment(answer)"
+                  />
+                  <button
+                    @click="submitComment(answer)"
+                    :disabled="!(commentInputs[answer.id] ?? '').trim()"
+                    class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >发布</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -343,5 +451,65 @@ const formatDate = (dateStr: string) => dateStr.slice(0, 16)
 :deep(.prose) code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   word-break: break-word;
+}
+
+/* 评论富文本渲染样式 */
+:deep(.comment-prose) p {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+:deep(.comment-prose) p:first-child {
+  margin-top: 0;
+}
+:deep(.comment-prose) p:last-child {
+  margin-bottom: 0;
+}
+:deep(.comment-prose) code {
+  font-size: 0.72rem;
+  padding: 1px 4px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  color: #ec4899;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+:deep(.comment-prose) pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  overflow-x: auto;
+  margin: 0.4rem 0;
+  font-size: 0.72rem;
+}
+:deep(.comment-prose) pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+:deep(.comment-prose) strong {
+  font-weight: 600;
+  color: #334155;
+}
+:deep(.comment-prose) em {
+  font-style: italic;
+}
+:deep(.comment-prose) a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+:deep(.comment-prose) blockquote {
+  border-left: 3px solid #93c5fd;
+  padding-left: 0.6rem;
+  margin: 0.3rem 0;
+  color: #64748b;
+  font-style: italic;
+}
+:deep(.comment-prose) ul, :deep(.comment-prose) ol {
+  padding-left: 1.2rem;
+  margin: 0.25rem 0;
+}
+:deep(.comment-prose) li {
+  margin: 0.1rem 0;
 }
 </style>
