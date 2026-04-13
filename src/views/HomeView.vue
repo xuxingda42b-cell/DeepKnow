@@ -1,24 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { TheTab } from '../components/theTab'
 import { QuestionItem } from '../components/questionItem'
 import { questionsData } from '../data/questions'
 import { isLoggedIn } from '../store/user'
 
+const route = useRoute()
 const currentTab = ref('推荐')
+
+const queryStr = computed(() => (route.query.q as string) || '')
 
 const handleTabChange = (tab: string) => {
   currentTab.value = tab
 }
 
 const getQuestionsByTab = () => {
+  let list = questionsData
+
+  if (queryStr.value) {
+    const qlower = queryStr.value.toLowerCase()
+    list = list.filter(q => 
+      q.title.toLowerCase().includes(qlower) ||
+      q.description.toLowerCase().includes(qlower) ||
+      q.tags.some(t => t.name.toLowerCase().includes(qlower)) ||
+      q.author.name.toLowerCase().includes(qlower)
+    )
+  }
+
   // Demo filter logic
   if (currentTab.value === '最新') {
-    return questionsData
+    return list
   } else if (currentTab.value === '热门') {
-    return [...questionsData].sort((a, b) => b.viewsCount - a.viewsCount)
+    return [...list].sort((a, b) => b.viewsCount - a.viewsCount)
   }
-  return [...questionsData].reverse()
+  return [...list].reverse()
 }
 </script>
 
@@ -79,8 +95,8 @@ const getQuestionsByTab = () => {
               <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <h3 class="mt-4 text-sm font-medium text-gray-900">还没有问题哦</h3>
-              <p class="mt-1 text-sm text-gray-500">还没有人回答，快来成为第一个吧！</p>
+              <h3 class="mt-4 text-sm font-medium text-gray-900">{{ queryStr ? '没有找到包含 "'+queryStr+'" 的问题' : '还没有问题哦' }}</h3>
+              <p class="mt-1 text-sm text-gray-500">{{ queryStr ? '换个搜索词试试看吧！' : '还没有人回答，快来成为第一个吧！' }}</p>
             </div>
           </template>
         </div>

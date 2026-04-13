@@ -8,6 +8,20 @@ export const TopNav = defineComponent({
     const router = useRouter()
     const route = useRoute()
 
+    const searchQuery = ref((route.query.q as string) || '')
+    watch(() => route.query.q, (newQ) => {
+      searchQuery.value = (newQ as string) || ''
+    })
+
+    const handleSearch = () => {
+      const q = searchQuery.value.trim()
+      if (q) {
+        router.push({ path: '/', query: { q } })
+      } else {
+        router.push({ path: '/' })
+      }
+    }
+
     const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=Admin')
 
     const updateAvatar = () => {
@@ -66,8 +80,10 @@ export const TopNav = defineComponent({
                 </svg>
               </div>
               <input
+                v-model={searchQuery.value}
+                onKeyup={(e: KeyboardEvent) => e.key === 'Enter' && handleSearch()}
                 type="text"
-                placeholder="搜索问题、话题或用户..."
+                placeholder="搜索问题、话题或用户... (按回车搜索)"
                 class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
               />
             </div>
