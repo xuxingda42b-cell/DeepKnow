@@ -14,7 +14,7 @@
               class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-md bg-gray-50 object-cover"
             />
             <div class="text-center sm:text-left mb-2">
-              <h1 class="text-2xl font-bold text-gray-900">管理员</h1>
+              <h1 class="text-2xl font-bold text-gray-900">{{ profileData.name || '管理员' }}</h1>
               <p class="text-gray-500 text-sm mt-1">{{ profileData.bio || '这个人很懒，什么都没有留下。' }}</p>
             </div>
           </div>
@@ -113,6 +113,7 @@ import { ref, reactive, onMounted } from 'vue'
 const activeTab = ref('profile')
 
 const profileData = reactive({
+  name: '管理员',
   avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
   bio: '',
   gender: 'none',

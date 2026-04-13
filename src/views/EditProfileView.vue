@@ -37,6 +37,11 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             
             <div class="col-span-1 sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">昵称</label>
+              <input v-model="formData.name" type="text" placeholder="您的称呼（起个好听的名字吧）" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+            </div>
+            
+            <div class="col-span-1 sm:col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">一句话简介</label>
               <input v-model="formData.bio" type="text" placeholder="简单介绍一下你自己..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
@@ -124,6 +129,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const formData = reactive({
+  name: '管理员',
   avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
   bio: '',
   gender: 'none',
