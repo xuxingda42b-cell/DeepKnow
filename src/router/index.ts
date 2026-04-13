@@ -31,6 +31,11 @@ const router = createRouter({
           path: 'profile/edit',
           name: 'profile-edit',
           component: () => import('../views/EditProfileView.vue'),
+        },
+        {
+          path: 'messages',
+          name: 'messages',
+          component: () => import('../views/MessagesView.vue'),
         }
       ]
     },
