@@ -180,6 +180,27 @@ const toggleCollect = () => {
     })
   }
 }
+
+// Share Logic
+const showShareModal = ref(false)
+const wechatQrCodeVisible = ref(false)
+const currentShareUrl = ref('')
+
+const openShare = () => {
+  currentShareUrl.value = window.location.href
+  wechatQrCodeVisible.value = false
+  showShareModal.value = true
+}
+
+const handleShareWeChat = () => {
+  wechatQrCodeVisible.value = true
+}
+
+const handleShareQQ = () => {
+  const title = encodeURIComponent(question.value.title)
+  const url = encodeURIComponent(currentShareUrl.value)
+  window.open(`http://connect.qq.com/widget/shareqq/index.html?url=${url}&title=${title}&summary=${encodeURIComponent('来看看这个有趣的问答')}`, '_blank')
+}
 </script>
 
 <template>
@@ -222,7 +243,7 @@ const toggleCollect = () => {
           </button>
 
           <div class="flex items-center gap-2 sm:gap-4 text-slate-500">
-            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
+            <button @click="openShare" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
               分享
             </button>
@@ -322,7 +343,7 @@ const toggleCollect = () => {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 {{ answer.comments.length > 0 ? `${answer.comments.length} 条评论` : '添加评论' }}
               </button>
-              <button class="flex items-center gap-1 hover:text-slate-700 transition-colors">
+              <button @click="openShare" class="flex items-center gap-1 hover:text-slate-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                 分享
               </button>
@@ -438,6 +459,43 @@ const toggleCollect = () => {
               :disabled="!answerContent.trim()"
               class="px-5 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >发布回答</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div v-if="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-all" @click.self="showShareModal = false">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl animate-fade-in relative transition-all">
+        <button @click="showShareModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <h3 class="text-lg font-bold text-gray-900 mb-6 text-center">分享给好友</h3>
+        
+        <div class="flex justify-center gap-10 mb-2">
+          <!-- WeChat -->
+          <button @click="handleShareWeChat" class="group flex flex-col items-center gap-2 focus:outline-none focus:scale-95 transition-transform">
+            <div class="w-14 h-14 bg-[#07C160] rounded-full flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
+              <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8.25 3.5C4.246 3.5 1 6.183 1 9.493c0 1.83.955 3.42 2.457 4.542l-.76 2.373a.473.473 0 00.597.59l2.482-.937c.725.228 1.503.35 2.302.35.438 0 .864-.04 1.275-.118-.1-.41-.157-.833-.157-1.272 0-3.593 3.565-6.505 7.962-6.505.787 0 1.545.093 2.261.265C18.618 5.762 13.985 3.5 8.25 3.5zm7.304 6.002c-3.864 0-6.993 2.652-6.993 5.925S11.69 21.352 15.554 21.352c.677 0 1.332-.095 1.944-.27l2.093.812a.406.406 0 00.514-.5l-.654-2.06c1.288-.95 2.103-2.316 2.103-3.856 0-3.273-3.129-5.925-6.993-5.925zm-2.072 3.654a.8.8 0 110-1.6.8.8 0 010 1.6zm4.143 0a.8.8 0 110-1.6.8.8 0 010 1.6zM6.55 7.5a.8.8 0 110-1.6.8.8 0 010 1.6zm3.3 0a.8.8 0 110-1.6.8.8 0 010 1.6z"/></svg>
+            </div>
+            <span class="text-xs text-gray-500 font-medium group-hover:text-gray-900 transition-colors">微信</span>
+          </button>
+          
+          <!-- QQ -->
+          <button @click="handleShareQQ" class="group flex flex-col items-center gap-2 focus:outline-none focus:scale-95 transition-transform">
+            <div class="w-14 h-14 bg-[#12B7F5] rounded-full flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 448 512"><path d="M433.754 420.445c-11.526 1.393-44.86-52.741-44.86-52.741 0 31.345-16.136 72.247-51.051 101.786 16.842 5.192 54.843 19.167 45.803 34.421-7.316 12.343-125.51 7.881-159.632 4.037-34.122 3.844-152.316 8.306-159.632-4.037-9.045-15.25 28.918-29.214 45.783-34.415-34.92-29.539-51.059-70.445-51.059-101.792 0 0-33.334 54.134-44.859 52.741-5.37-.65-12.424-29.644 9.347-99.704 10.261-33.024 21.995-60.478 40.144-105.779C60.683 98.063 108.982.006 224 0c113.737.006 163.156 96.133 160.264 214.963 18.118 45.223 29.912 72.85 40.144 105.778 21.768 70.06 14.716 99.053 9.346 99.704z"/></svg>
+            </div>
+            <span class="text-xs text-gray-500 font-medium group-hover:text-gray-900 transition-colors">QQ</span>
+          </button>
+        </div>
+
+        <!-- WeChat QR Code -->
+        <div v-if="wechatQrCodeVisible" class="mt-5 pt-5 border-t border-gray-100 flex flex-col items-center animate-fade-in">
+          <p class="text-xs text-slate-500 mb-3">打开微信，使用“扫一扫”分享</p>
+          <div class="relative bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+            <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${currentShareUrl.replace(/#/g, '%23')}`" class="w-36 h-36 border border-gray-50" />
+            <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Admin" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-white shadow-sm bg-white" />
           </div>
         </div>
       </div>
