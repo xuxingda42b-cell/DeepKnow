@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
 import { addArticle, getArticleById, updateArticle } from '../store/articles'
+import { saveDraft, getDraftById, deleteDraft } from '../store/drafts'
 
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
@@ -15,6 +16,11 @@ const profileName = savedProfile ? JSON.parse(savedProfile).name || '我' : '我
 
 const isEditing = computed(() => !!route.params.id)
 const editId = computed(() => route.params.id as string)
+const draftId = computed(() => route.query.draft as string)
+const isDraft = computed(() => !!draftId.value)
+
+// If not editing an existing article or draft, we create an ID in case we want to save draft.
+const currentDraftId = ref(route.query.draft as string || String(Date.now()))
 
 const title = ref('')
 const content = ref(`# 开始写作
@@ -46,7 +52,7 @@ console.log(hello)
 - 另一项
 `)
 
-const coverImage = ref('')
+
 const selectedTags = ref<string[]>([])
 const tagInput = ref('')
 const isSaving = ref(false)
@@ -60,6 +66,13 @@ onMounted(() => {
       title.value = article.title
       content.value = article.content
       selectedTags.value = [...article.tags]
+    }
+  } else if (isDraft.value) {
+    const draft = getDraftById(draftId.value)
+    if (draft) {
+      title.value = draft.title
+      content.value = draft.content
+      selectedTags.value = [...draft.tags]
     }
   }
 })
@@ -135,10 +148,13 @@ const handlePublish = () => {
       tags: selectedTags.value,
       summary
     })
+    deleteDraft(editId.value)
     isSaving.value = false
     router.push(`/article/${editId.value}`)
   } else {
-    const id = String(Date.now())
+    // If it was loaded from a draft, use its draftId as the article id so it becomes a valid item, 
+    // or just generate a new ID if it wasn't. We'll generate a new one unless currentDraftId is used.
+    const id = isDraft.value ? draftId.value : currentDraftId.value
     addArticle({
       id,
       title: title.value.trim(),
@@ -153,13 +169,26 @@ const handlePublish = () => {
       summary
     })
     
+    deleteDraft(id)
     isSaving.value = false
     router.push(`/article/${id}`)
   }
 }
 
 const handleSaveDraft = () => {
-  alert('草稿已保存！（功能开发中）')
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  const now = new Date()
+  const updatedAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+
+  saveDraft({
+    id: isEditing.value ? editId.value : currentDraftId.value,
+    title: title.value.trim(),
+    content: content.value,
+    tags: selectedTags.value,
+    updatedAt
+  })
+  
+  alert('草稿已保存！可以前往"头像 -> 我的草稿"查看。')
 }
 </script>
 

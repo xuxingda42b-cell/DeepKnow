@@ -29,7 +29,7 @@ export const deleteArticle = (id: string) => {
 export const updateArticle = (id: string, partial: Partial<Article>) => {
   const index = myArticles.value.findIndex(a => a.id === id)
   if (index !== -1) {
-    myArticles.value[index] = { ...myArticles.value[index], ...partial }
+    myArticles.value[index] = { ...myArticles.value[index], ...partial } as Article
   }
 }
 

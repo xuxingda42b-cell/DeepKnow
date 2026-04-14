@@ -43,6 +43,11 @@ const router = createRouter({
           component: () => import('../views/CollectionsView.vue'),
         },
         {
+          path: 'drafts',
+          name: 'drafts',
+          component: () => import('../views/DraftsView.vue'),
+        },
+        {
           path: 'article/write',
           name: 'write-article',
           component: () => import('../views/WriteArticleView.vue'),

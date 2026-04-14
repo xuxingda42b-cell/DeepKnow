@@ -1,8 +1,20 @@
 import { ref, computed, watch } from 'vue'
 
+export interface AppNotification {
+  id: number
+  type: string
+  isRead: boolean
+  avatar: string
+  sender: string
+  action: string
+  time: string
+  content?: string
+  target?: string
+}
+
 const savedNotifs = localStorage.getItem('user_notifications')
 
-export const messages = ref<any[]>(savedNotifs ? JSON.parse(savedNotifs) : [])
+export const messages = ref<AppNotification[]>(savedNotifs ? JSON.parse(savedNotifs) : [])
 
 watch(messages, (newVal) => {
   localStorage.setItem('user_notifications', JSON.stringify(newVal))
@@ -21,6 +33,6 @@ export const markAsRead = (id: number) => {
   }
 }
 
-export const addNotification = (notif: any) => {
+export const addNotification = (notif: AppNotification) => {
   messages.value.unshift(notif)
 }
