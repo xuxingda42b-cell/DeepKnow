@@ -26,6 +26,13 @@ export const deleteArticle = (id: string) => {
   myArticles.value = myArticles.value.filter(a => a.id !== id)
 }
 
+export const updateArticle = (id: string, partial: Partial<Article>) => {
+  const index = myArticles.value.findIndex(a => a.id === id)
+  if (index !== -1) {
+    myArticles.value[index] = { ...myArticles.value[index], ...partial }
+  }
+}
+
 export const getArticleById = (id: string) =>
   myArticles.value.find(a => a.id === id)
 

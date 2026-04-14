@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
-import { addArticle } from '../store/articles'
+import { addArticle, getArticleById, updateArticle } from '../store/articles'
 
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
 const router = useRouter()
+const route = useRoute()
 const savedProfile = localStorage.getItem('profile_data')
 const profileName = savedProfile ? JSON.parse(savedProfile).name || '我' : '我'
+
+const isEditing = computed(() => !!route.params.id)
+const editId = computed(() => route.params.id as string)
 
 const title = ref('')
 const content = ref(`# 开始写作
@@ -48,6 +52,17 @@ const tagInput = ref('')
 const isSaving = ref(false)
 
 const tagSuggestions = ['前端', '后端', 'Vue.js', 'React', 'TypeScript', 'JavaScript', 'Node.js', 'Python', '算法', '职场']
+
+onMounted(() => {
+  if (isEditing.value) {
+    const article = getArticleById(editId.value)
+    if (article) {
+      title.value = article.title
+      content.value = article.content
+      selectedTags.value = [...article.tags]
+    }
+  }
+})
 
 const parsedContent = computed(() => {
   if (!content.value) return '<p class="text-slate-400 italic">开始输入内容，右侧实时预览...</p>'
@@ -113,23 +128,34 @@ const handlePublish = () => {
   const plainText = content.value.replace(/#{1,6}\s/g, '').replace(/[*_`~>+\-=|[\]]/g, '').trim()
   const summary = plainText.slice(0, 120) + (plainText.length > 120 ? '...' : '')
   
-  const id = String(Date.now())
-  addArticle({
-    id,
-    title: title.value.trim(),
-    content: content.value,
-    tags: selectedTags.value,
-    author: {
-      name: profileName,
-      avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
-    },
-    createdAt,
-    viewsCount: 0,
-    summary
-  })
-  
-  isSaving.value = false
-  router.push(`/article/${id}`)
+  if (isEditing.value) {
+    updateArticle(editId.value, {
+      title: title.value.trim(),
+      content: content.value,
+      tags: selectedTags.value,
+      summary
+    })
+    isSaving.value = false
+    router.push(`/article/${editId.value}`)
+  } else {
+    const id = String(Date.now())
+    addArticle({
+      id,
+      title: title.value.trim(),
+      content: content.value,
+      tags: selectedTags.value,
+      author: {
+        name: profileName,
+        avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'
+      },
+      createdAt,
+      viewsCount: 0,
+      summary
+    })
+    
+    isSaving.value = false
+    router.push(`/article/${id}`)
+  }
 }
 
 const handleSaveDraft = () => {
@@ -160,7 +186,7 @@ const handleSaveDraft = () => {
           :disabled="isSaving"
           class="px-5 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm"
         >
-          {{ isSaving ? '发布中...' : '发布文章' }}
+          {{ isSaving ? (isEditing ? '保存中...' : '发布中...') : (isEditing ? '保存修改' : '发布文章') }}
         </button>
       </div>
     </div>
