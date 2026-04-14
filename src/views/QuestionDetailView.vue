@@ -5,6 +5,7 @@ import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
 import { myQuestions, deleteQuestion, incrementViews } from '../store/questions'
+import { addNotification } from '../store/notifications'
 
 import { getAnswersByQuestionId, submitAnswerToStore, deleteAnswer, type Answer } from '../store/answers'
 
@@ -218,6 +219,23 @@ const openReport = (type: string) => {
 const submitReport = () => {
   if (selectedReasons.value.length === 0) return
   if (selectedReasons.value.includes('其他') && !reportReason.value.trim()) return
+
+  // Create notification message for the successful report
+  const targetName = reportType.value === 'question' ? `问题：${question.value.title}` : `某个回答`
+  const reasonText = selectedReasons.value.filter(r => r !== '其他').join('、') + (selectedReasons.value.includes('其他') ? (selectedReasons.value.length > 1 ? '、' : '') + reportReason.value : '')
+  
+  addNotification({
+    id: Date.now(),
+    type: 'system',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=System',
+    sender: '系统通知',
+    action: '举报受理回执',
+    content: `您对 "${targetName}" 的举报已提交（举报类型：${reasonText}）。我们会尽快核实处理，感谢您共同维护社区环境！`,
+    target: '',
+    time: '刚刚',
+    isRead: false
+  })
+
   alert('举报已成功提交，感谢您的反馈，工作人员将尽快处理！')
   showReportModal.value = false
 }
