@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
+import { myQuestions, deleteQuestion } from '../store/questions'
 
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
@@ -23,13 +24,18 @@ interface Comment {
 }
 
 const route = useRoute()
+const router = useRouter()
 const questionId = route.params.id as string
 
-// Mock Question Data
+const realQ = myQuestions.value.find(q => String(q.id) === String(questionId))
+const savedProfile = localStorage.getItem('profile_data')
+const profileName = savedProfile ? JSON.parse(savedProfile).name || '我' : '我'
+
+// Mock or real Question Data
 const question = ref({
   id: questionId,
-  title: '如何在 Vue 3 中优雅地使用组合式 API 管理状态？',
-  content: `
+  title: realQ ? realQ.title : '如何在 Vue 3 中优雅地使用组合式 API 管理状态？',
+  content: realQ ? realQ.description : `
     <p class="mb-4">最近在重构一个项目，感觉对于全局状态的处理有点乱。想请教大家，如果不使用 Pinia 或 Vuex，单靠 Provide/Inject 或者响应式对象，有没有什么最佳实践？</p>
     <pre class="bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto my-4 text-sm font-mono"><code class="language-javascript">const globalState = reactive({ 
   user: null,
@@ -38,12 +44,19 @@ const question = ref({
 export const useGlobalState = () => globalState</code></pre>
     <p>这样做有没有什么性能或者测试上的隐患？</p>
   `,
-  author: { name: '前端探路者', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Felix&scale=200' },
-  createdAt: '2026-04-10 10:24:00',
-  isAuthor: false, // If true, show Edit button
-  tags: ['Vue.js', 'JavaScript', '前端开发'],
-  readCount: 1420
+  author: realQ ? realQ.author : { name: '前端探路者', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Felix&scale=200' },
+  createdAt: realQ ? realQ.time : '2026-04-10 10:24:00',
+  isAuthor: realQ ? realQ.author.name === profileName : false, // If true, show Edit/Delete buttons
+  tags: realQ ? realQ.tags.map((t: { name: string }) => t.name) : ['Vue.js', 'JavaScript', '前端开发'],
+  readCount: realQ ? realQ.viewsCount : 1420
 })
+
+const doDeleteQuestion = () => {
+  if (confirm('确定要删除这个问题吗？此操作不可恢复。')) {
+    deleteQuestion(question.value.id)
+    router.push('/')
+  }
+}
 
 // Mock Answers Data
 const answers = ref([
@@ -260,6 +273,10 @@ const toggleCollect = () => {
             </button>
             <button v-if="question.isAuthor" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors text-blue-600">
               编辑
+            </button>
+            <button v-if="question.isAuthor" @click="doDeleteQuestion" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              删除
             </button>
           </div>
         </div>

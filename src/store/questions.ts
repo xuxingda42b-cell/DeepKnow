@@ -32,3 +32,7 @@ watch(myQuestions, (newVal) => {
 export const addQuestion = (q: Question) => {
   myQuestions.value.unshift(q)
 }
+
+export const deleteQuestion = (id: string) => {
+  myQuestions.value = myQuestions.value.filter(q => q.id !== id)
+}
