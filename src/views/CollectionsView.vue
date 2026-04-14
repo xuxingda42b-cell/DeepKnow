@@ -72,7 +72,7 @@
                 </div>
                 
                 <!-- 标题 -->
-                <router-link :to="`/question/${item.id}`" class="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-1 mb-2 before:absolute before:inset-0">
+                <router-link :to="item.type === 'question' ? `/question/${item.id}` : `/article/${item.id}`" class="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-1 mb-2 before:absolute before:inset-0">
                   {{ item.title }}
                 </router-link>
                 

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
 import { getArticleById, deleteArticle, incrementArticleViews } from '../store/articles'
+import { isCollected, addCollection, removeCollection } from '../store/collections'
 
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
@@ -32,6 +33,29 @@ const doDelete = () => {
   if (confirm('确定要删除这篇文章吗？')) {
     deleteArticle(articleId)
     router.push('/')
+  }
+}
+
+// Collection state
+const hasCollected = computed(() => isCollected(articleId, 'article'))
+
+const toggleCollect = () => {
+  if (!article.value) return
+  if (hasCollected.value) {
+    removeCollection(articleId, 'article')
+  } else {
+    const plainText = article.value.content.replace(/<[^>]*>?/gm, '').trim()
+    addCollection({
+      id: articleId,
+      type: 'article',
+      title: article.value.title,
+      summary: plainText.slice(0, 120) + (plainText.length > 120 ? '...' : ''),
+      tags: article.value.tags,
+      author: article.value.author.name,
+      authorAvatar: article.value.author.avatar,
+      stats: `${article.value.viewsCount} 阅读`,
+      savedAt: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })
+    })
   }
 }
 </script>
@@ -72,16 +96,27 @@ const doDelete = () => {
                 <p class="text-xs">发布于 {{ formatDate(article.createdAt) }} · {{ article.viewsCount }} 阅读</p>
               </div>
             </div>
-            <!-- Author actions -->
-            <div v-if="article.author.name === profileName" class="flex items-center gap-2">
-              <router-link
-                :to="`/article/edit/${article.id}`"
-                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors"
-              >编辑</router-link>
-              <button
-                @click="doDelete"
-                class="px-3 py-1.5 text-sm border border-red-200 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-              >删除</button>
+            <!-- Author actions & Collect -->
+            <div class="flex items-center gap-2 mt-4 sm:mt-0">
+              <button 
+                @click="toggleCollect"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors text-sm"
+                :class="hasCollected ? 'text-amber-500 bg-amber-50 hover:bg-amber-100 border border-amber-100' : 'text-gray-500 hover:bg-gray-100 hover:text-amber-500 border border-gray-200'"
+              >
+                <svg class="w-4 h-4" :fill="hasCollected ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                {{ hasCollected ? '已收藏' : '收藏' }}
+              </button>
+
+              <div v-if="article.author.name === profileName" class="flex items-center gap-2">
+                <router-link
+                  :to="`/article/edit/${article.id}`"
+                  class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors"
+                >编辑</router-link>
+                <button
+                  @click="doDelete"
+                  class="px-3 py-1.5 text-sm border border-red-200 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                >删除</button>
+              </div>
             </div>
           </div>
         </div>
