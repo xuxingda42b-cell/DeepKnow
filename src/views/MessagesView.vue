@@ -26,10 +26,9 @@
 
       <!-- 右侧消息列表区 -->
       <div class="flex-1 flex flex-col relative bg-white">
-        <!-- 头部栏 -->
         <div class="h-16 border-b border-gray-100 flex items-center justify-between px-8 bg-white shrink-0">
           <h3 class="font-bold text-gray-800 text-lg">{{ currentTabName }}</h3>
-          <button class="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1.5 focus:outline-none">
+          <button @click="markAllAsRead" class="text-sm text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1.5 focus:outline-none">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             全部标为已读
           </button>
@@ -45,7 +44,7 @@
           
           <!-- 消息列表 -->
           <ul v-else class="divide-y divide-gray-50/80">
-            <li v-for="msg in messages" :key="msg.id" class="px-8 py-5 hover:bg-blue-50/30 transition-colors cursor-pointer group relative">
+            <li v-for="msg in messages" :key="msg.id" @click="markAsRead(msg.id)" class="px-8 py-5 hover:bg-blue-50/30 transition-colors cursor-pointer group relative">
               <div v-if="!msg.isRead" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
               <div class="flex gap-4 items-start">
                 <img :src="msg.avatar" alt="Avatar" class="w-11 h-11 rounded-full border border-gray-100 object-cover shrink-0 mt-0.5" />
@@ -73,101 +72,43 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { messages as globalMessages, markAllAsRead, markAsRead } from '../store/notifications'
 
 const activeTab = ref('all')
 
-const tabs = [
+const tabs = computed(() => [
   { 
     id: 'all', 
     name: '全部消息', 
-    unread: 3,
+    unread: globalMessages.value.filter(m => !m.isRead).length,
     icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>`
   },
   {
     id: 'mentions',
     name: '评论和@我',
-    unread: 1,
+    unread: globalMessages.value.filter(m => m.type === 'mentions' && !m.isRead).length,
     icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>`
   },
   {
     id: 'likes',
     name: '收到的赞',
-    unread: 2,
+    unread: globalMessages.value.filter(m => m.type === 'likes' && !m.isRead).length,
     icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg>`
   },
   {
     id: 'system',
     name: '系统通知',
-    unread: 0,
+    unread: globalMessages.value.filter(m => m.type === 'system' && !m.isRead).length,
     icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
   }
-]
+])
 
 const currentTabName = computed(() => {
-  return tabs.find(t => t.id === activeTab.value)?.name || '消息列表'
+  return tabs.value.find(t => t.id === activeTab.value)?.name || '消息列表'
 })
 
-// Mocks
-const mockMessages = [
-  {
-    id: 1,
-    type: 'mentions',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-    sender: '路人甲',
-    action: '在问题中提到了你',
-    content: '我觉得 @管理员 的那个方案更好一些，你们觉得呢？我们可以稍微调整一下。',
-    target: '如何使用 Vue 3 组合式 API 写出更优雅的代码？',
-    time: '10 分钟前',
-    isRead: false
-  },
-  {
-    id: 2,
-    type: 'likes',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-    sender: '热心网友',
-    action: '赞了你的回答',
-    content: '',
-    target: '响应式数据直接修改会造成什么影响？...',
-    time: '1 小时前',
-    isRead: false
-  },
-  {
-    id: 3,
-    type: 'likes',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lydia',
-    sender: 'Jane Doe',
-    action: '赞了你的文章',
-    content: '',
-    target: '2024 年前端发展趋势解读',
-    time: '2 小时前',
-    isRead: false
-  },
-  {
-    id: 4,
-    type: 'mentions',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
-    sender: 'Bob Admin',
-    action: '回复了你',
-    content: '非常感谢你的解答！我现在明白了，原来是 setup 函数的执行时机问题。以后写代码会注意的。',
-    target: '我的评论：你可能没注意到生命周期的顺序...',
-    time: '昨天 14:20',
-    isRead: true
-  },
-  {
-    id: 5,
-    type: 'system',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=System',
-    sender: '系统通知',
-    action: '社区规则更新',
-    content: '为了提供更好的交流环境，社区更新了包含友好发帖等的一系列规范，请查收了解。',
-    target: '',
-    time: '2024-03-21',
-    isRead: true
-  }
-]
-
 const messages = computed(() => {
-  if (activeTab.value === 'all') return mockMessages
-  return mockMessages.filter(m => m.type === activeTab.value)
+  if (activeTab.value === 'all') return globalMessages.value
+  return globalMessages.value.filter(m => m.type === activeTab.value)
 })
 </script>

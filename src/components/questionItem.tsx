@@ -33,7 +33,7 @@ export const QuestionItem = defineComponent({
 
     return () => {
       const { question } = props
-      const realAnswersCount = getAnswersByQuestionId(question.id).length || question.answersCount
+      const realAnswersCount = getAnswersByQuestionId(question.id).length
 
       return (
         <RouterLink to={`/question/${question.id}`} class="block p-4 bg-white hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0 group cursor-pointer">
