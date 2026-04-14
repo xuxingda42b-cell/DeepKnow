@@ -129,7 +129,7 @@ const submitComment = () => {
   const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
 
   article.value.comments.push({
-    id: Date.now(),
+    id: String(Date.now()),
     author: { 
       name: profileName, 
       avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' 
@@ -153,10 +153,10 @@ const submitComment = () => {
   commentInput.value = ''
 }
 
-const deleteComment = (commentId: number) => {
+const deleteComment = (commentId: string) => {
   if (!article.value || !article.value.comments) return
   if (confirm('确定要删除这条评论吗？')) {
-    article.value.comments = article.value.comments.filter((c: any) => c.id !== commentId)
+    article.value.comments = article.value.comments.filter(c => String(c.id) !== String(commentId))
   }
 }
 

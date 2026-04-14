@@ -3,14 +3,14 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <!-- 头图背景 -->
       <div class="h-32 bg-gradient-to-r from-blue-500 to-blue-400"></div>
-      
+
       <!-- 用户信息区 -->
       <div class="px-8 pb-8 relative">
         <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between -mt-12 sm:-mt-16 mb-6 gap-4">
           <div class="flex flex-col sm:flex-row items-center sm:items-end gap-5">
-            <img 
-              :src="profileData.avatarUrl" 
-              alt="User Avatar" 
+            <img
+              :src="profileData.avatarUrl"
+              alt="User Avatar"
               class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-md bg-gray-50 object-cover"
             />
             <div class="text-center sm:text-left mb-2">
@@ -18,7 +18,7 @@
               <p class="text-gray-500 text-sm mt-1">{{ profileData.bio || '这个人很懒，什么都没有留下。' }}</p>
             </div>
           </div>
-          
+
           <router-link to="/profile/edit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors shadow-sm text-sm inline-block">
             编辑资料
           </router-link>
@@ -42,47 +42,43 @@
             <div class="text-xl font-bold text-gray-900">{{ userComments.length }}</div>
             <div class="text-xs text-gray-500 mt-1">评论</div>
           </div>
-          <div class="text-center cursor-pointer hover:opacity-80 transition-opacity">
-            <div class="text-xl font-bold text-gray-900">12.5k</div>
-            <div class="text-xs text-gray-500 mt-1">粉丝</div>
-          </div>
         </div>
 
         <!-- 标签页与内容 -->
         <div>
           <div class="flex gap-6 border-b border-gray-100 overflow-x-auto whitespace-nowrap">
-            <button 
+            <button
               @click="activeTab = 'profile'"
               :class="['pb-3 font-medium text-sm transition-colors shrink-0', activeTab === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">
               个人资料
             </button>
-            <button 
+            <button
               @click="activeTab = 'recent'"
               :class="['pb-3 font-medium text-sm transition-colors shrink-0', activeTab === 'recent' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">
               最近动态
             </button>
-            <button 
+            <button
               @click="activeTab = 'questions'"
               :class="['pb-3 font-medium text-sm transition-colors shrink-0', activeTab === 'questions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">
               我的提问
             </button>
-            <button 
+            <button
               @click="activeTab = 'articles'"
               :class="['pb-3 font-medium text-sm transition-colors shrink-0', activeTab === 'articles' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">
               我的文章
             </button>
-            <button 
+            <button
               @click="activeTab = 'comments'"
               :class="['pb-3 font-medium text-sm transition-colors shrink-0', activeTab === 'comments' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">
               我的评论
             </button>
-            <button 
+            <button
               @click="activeTab = 'answers'"
               :class="['pb-3 font-medium text-sm transition-colors shrink-0', activeTab === 'answers' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700']">
               我的回答
             </button>
           </div>
-          
+
           <!-- 个人资料面板 -->
           <div v-show="activeTab === 'profile'" class="py-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
@@ -109,7 +105,7 @@
 
           <!-- 通用列表容器 -->
           <div v-show="activeTab !== 'profile'" class="py-6">
-            
+
             <!-- 最近动态 -->
             <div v-if="activeTab === 'recent'">
               <div v-if="!recentActivities.length" class="py-16 text-center text-gray-400 text-sm flex flex-col items-center justify-center">
@@ -123,7 +119,7 @@
                        在 <router-link :to="item.link" class="text-blue-500 hover:underline">{{ item.sourceTitle }}</router-link> {{ item.action }} · {{ item.createdAt.slice(0, 16) }}
                      </p>
                      <p v-else class="text-sm text-gray-500 mb-2">{{ item.action }} · {{ item.createdAt.slice(0, 16) }}</p>
-                     
+
                      <router-link :to="item.link" v-if="item.title" class="text-lg font-bold text-gray-800 hover:text-blue-600 mb-2 block line-clamp-1">{{ item.title }}</router-link>
                      <div class="prose prose-sm max-w-none text-gray-600 line-clamp-3 bg-gray-50/50 p-3 rounded-lg border border-gray-100" v-html="parseMarkdown(item.content)"></div>
                    </div>
@@ -245,48 +241,57 @@ const userAnswers = computed(() => {
 const userComments = computed(() => {
   const ansComments = allAnswers.value.flatMap(a => {
     const q = myQuestions.value.find(q => String(q.id) === String(a.questionId))
-    return (a.comments || []).map(c => ({ 
-      ...c, 
-      sourceType: 'answer', 
-      sourceTitle: q ? q.title : '未知提问', 
-      link: `/question/${a.questionId}` 
+    return (a.comments || []).map(c => ({
+      ...c,
+      sourceType: 'answer',
+      sourceTitle: q ? q.title : '未知提问',
+      link: `/question/${a.questionId}`
     }))
   })
-  
-  const artComments = myArticles.value.flatMap(a => (a.comments || []).map(c => ({ 
-    ...c, 
-    sourceType: 'article', 
-    sourceTitle: a.title, 
-    link: `/article/${a.id}` 
+
+  const artComments = myArticles.value.flatMap(a => (a.comments || []).map(c => ({
+    ...c,
+    sourceType: 'article',
+    sourceTitle: a.title,
+    link: `/article/${a.id}`
   })))
-  
+
   return [...ansComments, ...artComments]
     .filter(c => c.author.name === profileData.name)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
 
 const recentActivities = computed(() => {
-  const items: any[] = []
-  
+  const items: Array<{
+    id: string;
+    type: string;
+    action: string;
+    title: string;
+    content: string;
+    createdAt: string;
+    link: string;
+    sourceTitle?: string;
+  }> = []
+
   userQuestions.value.forEach(q => items.push({
     id: `q-${q.id}`, type: 'question', action: '发布了提问',
     title: q.title, content: q.description,
     createdAt: q.time, link: `/question/${q.id}`
   }))
-  
+
   userArticles.value.forEach(a => items.push({
     id: `a-${a.id}`, type: 'article', action: '发布了文章',
     title: a.title, content: a.summary,
     createdAt: a.createdAt, link: `/article/${a.id}`
   }))
-  
+
   userComments.value.forEach(c => items.push({
     id: `c-${c.id}`, type: 'comment', action: `发表了评论`,
     title: '', content: c.content,
     createdAt: c.createdAt, link: c.link,
     sourceTitle: c.sourceTitle
   }))
-  
+
   return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
 

@@ -52,11 +52,11 @@ export const TopNav = defineComponent({
           {/* Logo / Brand & Nav Links */}
           <div class="flex items-center gap-4 sm:gap-8">
             <div class="flex items-center gap-2">
-              <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl shadow-sm">
-                Q&A
+              <div class="w-36 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl shadow-sm">
+                DeepKnow
               </div>
               <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 hidden sm:block tracking-tight">
-                问答社区
+                知渊
               </span>
             </div>
 

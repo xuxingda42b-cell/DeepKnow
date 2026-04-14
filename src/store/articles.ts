@@ -1,5 +1,15 @@
 import { ref, watch } from 'vue'
 
+export interface ArticleComment {
+  id: string
+  content: string
+  createdAt: string
+  author: {
+    name: string
+    avatar: string
+  }
+}
+
 export interface Article {
   id: string
   title: string
@@ -9,7 +19,7 @@ export interface Article {
   createdAt: string
   viewsCount: number
   summary: string        // 纯文本摘要（截取前100字）
-  comments?: any[]       // 文章评论
+  comments?: ArticleComment[] // 文章评论
 }
 
 const saved = localStorage.getItem('user_articles')
