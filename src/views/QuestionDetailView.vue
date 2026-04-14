@@ -201,6 +201,26 @@ const handleShareQQ = () => {
   const url = encodeURIComponent(currentShareUrl.value)
   window.open(`http://connect.qq.com/widget/shareqq/index.html?url=${url}&title=${title}&summary=${encodeURIComponent('来看看这个有趣的问答')}`, '_blank')
 }
+
+// Report Logic
+const showReportModal = ref(false)
+const reportReason = ref('')
+const reportType = ref('')
+const selectedReasons = ref<string[]>([])
+
+const openReport = (type: string) => {
+  reportType.value = type
+  reportReason.value = ''
+  selectedReasons.value = []
+  showReportModal.value = true
+}
+
+const submitReport = () => {
+  if (selectedReasons.value.length === 0) return
+  if (selectedReasons.value.includes('其他') && !reportReason.value.trim()) return
+  alert('举报已成功提交，感谢您的反馈，工作人员将尽快处理！')
+  showReportModal.value = false
+}
 </script>
 
 <template>
@@ -255,7 +275,7 @@ const handleShareQQ = () => {
               <svg class="w-4 h-4" :fill="hasCollected ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
               {{ hasCollected ? '已收藏' : '收藏' }}
             </button>
-            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
+            <button @click="openReport('question')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" /></svg>
               举报
             </button>
@@ -347,7 +367,7 @@ const handleShareQQ = () => {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                 分享
               </button>
-              <button class="flex items-center gap-1 hover:text-slate-700 transition-colors">
+              <button @click="openReport('answer')" class="flex items-center gap-1 hover:text-slate-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" /></svg>
                 举报
               </button>
@@ -497,6 +517,49 @@ const handleShareQQ = () => {
             <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${currentShareUrl.replace(/#/g, '%23')}`" class="w-36 h-36 border border-gray-50" />
             <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Admin" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-white shadow-sm bg-white" />
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div v-if="showReportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-all" @click.self="showReportModal = false">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl animate-fade-in relative transition-all">
+        <button @click="showReportModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">举报内容</h3>
+        <p class="text-sm text-gray-500 mb-5">请选择您要举报的问题类型（可多选），我们将尽快处理。</p>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2 mb-4">
+          <label v-for="reason in ['垃圾广告', '涉黄信息', '人身攻击', '违法犯罪', '不实信息', '其他']" :key="reason" class="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              :value="reason" 
+              v-model="selectedReasons" 
+              class="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-red-500/30 transition-colors" 
+            />
+            <span class="text-sm text-gray-700 group-hover:text-gray-900">{{ reason }}</span>
+          </label>
+        </div>
+
+        <div v-if="selectedReasons.includes('其他')" class="animate-fade-in">
+          <textarea 
+            v-model="reportReason"
+            rows="3" 
+            placeholder="请详细描述具体的举报理由..." 
+            class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none bg-slate-50 placeholder-slate-400 mt-2"
+          ></textarea>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <button @click="showReportModal = false" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium">取消</button>
+          <button 
+            @click="submitReport"
+            :disabled="selectedReasons.length === 0 || (selectedReasons.includes('其他') && !reportReason.trim())"
+            class="px-6 py-2 text-sm bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-red-500/30"
+          >
+            提交举报
+          </button>
         </div>
       </div>
     </div>
