@@ -102,6 +102,14 @@ export const TopNav = defineComponent({
                   提问
                 </RouterLink>
 
+                <RouterLink
+                  to="/article/write"
+                  class="hidden sm:flex items-center gap-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 px-4 py-1.5 rounded-full font-medium transition-colors border border-indigo-100"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  写文章
+                </RouterLink>
+
                 {/* Notifications */}
                 <RouterLink to="/messages" class="relative block p-2 text-gray-500 hover:text-blue-600 transition-colors rounded-full hover:bg-blue-50">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

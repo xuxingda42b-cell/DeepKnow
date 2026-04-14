@@ -41,6 +41,16 @@ const router = createRouter({
           path: 'collections',
           name: 'collections',
           component: () => import('../views/CollectionsView.vue'),
+        },
+        {
+          path: 'article/write',
+          name: 'write-article',
+          component: () => import('../views/WriteArticleView.vue'),
+        },
+        {
+          path: 'article/:id',
+          name: 'article-detail',
+          component: () => import('../views/ArticleDetailView.vue'),
         }
       ]
     },
