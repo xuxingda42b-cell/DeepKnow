@@ -14,8 +14,19 @@ const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
 const parseMarkdown = (raw: string) => {
   if (!raw) return ''
+  // 将 "@文字" 替换为带有蓝色样式的 a 标签，使用独立的 mention-link 类防屏蔽
+  const withMentions = raw.replace(/(^|\s)(@[^\s]+)/g, '$1<a href="/profile" class="mention-link">$2</a>')
   // marked.parse may return a promise in some configurations, but defaults to string.
-  return DOMPurify.sanitize(marked.parse(raw, { breaks: true, gfm: true }) as string)
+  return DOMPurify.sanitize(marked.parse(withMentions, { breaks: true, gfm: true }) as string, { ADD_ATTR: ['class', 'target'] })
+}
+
+const handleMarkdownClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  const link = target.closest('a[href="/profile"]')
+  if (link) {
+    e.preventDefault()
+    router.push('/profile')
+  }
 }
 
 const route = useRoute()
@@ -64,6 +75,15 @@ const expandedComments = ref<Record<number, boolean>>({})
 // 每个回答的评论输入内容
 const commentInputs = ref<Record<number, string>>({})
 
+const replyToComment = (answerId: number, authorName: string) => {
+  const currentText = commentInputs.value[answerId] || ''
+  commentInputs.value[answerId] = currentText ? `${currentText} @${authorName} ` : `@${authorName} `
+  nextTick(() => {
+    const input = document.getElementById(`comment-input-${answerId}`)
+    if (input) input.focus()
+  })
+}
+
 const toggleComments = (answerId: number) => {
   expandedComments.value[answerId] = !expandedComments.value[answerId]
 }
@@ -83,12 +103,20 @@ const submitComment = (answer: Answer) => {
   })
 
   const plainTarget = answer.content.replace(/<[^>]*>?/gm, '')
+  
+  let actionText = '评论了你的回答'
+  if (text.includes(`@${profileName}`)) {
+    actionText = '在评论中@了你'
+  } else if (text.includes('@')) {
+    actionText = '回复了评论'
+  }
+
   addNotification({
     id: Date.now() + 1,
     type: 'mentions',
     avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200',
     sender: profileName,
-    action: '评论了你的回答',
+    action: actionText,
     content: text,
     target: plainTarget.slice(0, 30) + (plainTarget.length > 30 ? '...' : ''),
     time: '刚刚',
@@ -120,7 +148,7 @@ const sortedAnswers = computed(() => {
   })
 })
 
-const handleVote = (answer: any, type: 1 | -1) => {
+const handleVote = (answer: Answer, type: 1 | -1) => {
   if (answer.userVoted === type) {
     // Cancel vote
     answer.points -= type
@@ -314,7 +342,7 @@ const submitReport = () => {
         </div>
 
         <!-- Question Body (Rich Text Content) -->
-        <div class="prose max-w-none text-slate-800 leading-relaxed text-[15px] mb-8 break-words" v-html="parseMarkdown(question.content)"></div>
+        <div class="prose max-w-none text-slate-800 leading-relaxed text-[15px] mb-8 break-words" v-html="parseMarkdown(question.content)" @click="handleMarkdownClick"></div>
 
         <!-- Action Bar -->
         <div class="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4">
@@ -413,7 +441,7 @@ const submitReport = () => {
             </div>
 
             <!-- Content (Rich Text) -->
-            <div class="prose prose-sm sm:prose max-w-none text-slate-700 leading-relaxed text-[15px] mb-4 break-words prose-pre:bg-slate-800 prose-pre:text-slate-100 prose-pre:rounded-lg prose-p:mb-3" v-html="parseMarkdown(answer.content)"></div>
+            <div class="prose prose-sm sm:prose max-w-none text-slate-700 leading-relaxed text-[15px] mb-4 break-words prose-pre:bg-slate-800 prose-pre:text-slate-100 prose-pre:rounded-lg prose-p:mb-3" v-html="parseMarkdown(answer.content)" @click="handleMarkdownClick"></div>
 
             <!-- Bottom Actions -->
             <div class="flex items-center gap-4 text-sm text-slate-500 pt-3 flex-wrap">
@@ -462,18 +490,27 @@ const submitReport = () => {
                   <div class="flex items-baseline gap-1.5 flex-wrap">
                     <span class="text-xs font-semibold text-slate-700 shrink-0">{{ comment.author.name }}</span>
                     <span class="text-[11px] text-slate-400 shrink-0">{{ formatDate(comment.createdAt) }}</span>
-                    <button 
-                      v-if="comment.author.name === profileName"
-                      @click="deleteComment(answer, comment.id)"
-                      class="text-[11px] text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity ml-auto sm:ml-2 focus:opacity-100 cursor-pointer"
-                    >
-                      删除
-                    </button>
+                    <div class="ml-auto sm:ml-2 flex items-center gap-2">
+                      <button 
+                        @click="replyToComment(answer.id, comment.author.name)"
+                        class="text-[11px] text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 cursor-pointer"
+                      >
+                        回复
+                      </button>
+                      <button 
+                        v-if="comment.author.name === profileName"
+                        @click="deleteComment(answer, comment.id)"
+                        class="text-[11px] text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 cursor-pointer"
+                      >
+                        删除
+                      </button>
+                    </div>
                   </div>
                   <!-- 评论内容支持 Markdown/HTML 渲染 -->
                   <div
                     class="text-xs text-slate-600 comment-prose mt-0.5"
                     v-html="parseMarkdown(comment.content)"
+                    @click="handleMarkdownClick"
                   ></div>
                 </div>
               </div>
@@ -490,6 +527,7 @@ const submitReport = () => {
                 />
                 <div class="flex-1 flex gap-2">
                   <input
+                    :id="`comment-input-${answer.id}`"
                     v-model="commentInputs[answer.id]"
                     type="text"
                     placeholder="添加评论... 支持 Markdown"
@@ -706,6 +744,12 @@ const submitReport = () => {
 :deep(.comment-prose) a {
   color: #3b82f6;
   text-decoration: underline;
+}
+:deep(.comment-prose) a.mention-link, :deep(.prose) a.mention-link {
+  color: #3b82f6 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
 }
 :deep(.comment-prose) blockquote {
   border-left: 3px solid #93c5fd;
