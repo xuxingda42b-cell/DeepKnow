@@ -6,6 +6,8 @@ import * as DOMPurifyPkg from 'dompurify'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
 import { myQuestions, deleteQuestion } from '../store/questions'
 
+import { getAnswersByQuestionId, submitAnswerToStore, type Answer } from '../store/answers'
+
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
@@ -13,14 +15,6 @@ const parseMarkdown = (raw: string) => {
   if (!raw) return ''
   // marked.parse may return a promise in some configurations, but defaults to string.
   return DOMPurify.sanitize(marked.parse(raw, { breaks: true, gfm: true }) as string)
-}
-
-// 评论类型
-interface Comment {
-  id: number
-  author: { name: string; avatar: string }
-  content: string
-  createdAt: string
 }
 
 const route = useRoute()
@@ -58,58 +52,7 @@ const doDeleteQuestion = () => {
   }
 }
 
-// Mock Answers Data
-const answers = ref([
-  {
-    id: 1,
-    author: { name: '尤大粉', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Evan&scale=200' },
-    content: `
-      <p class="mb-4">个人经验，如果只有很少几个全局状态，你写的这种直接 export 一个 reactive 对象的模式完全没问题（通常被称为 Store 模式）。</p>
-      <blockquote class="border-l-4 border-blue-400 pl-4 py-1 my-4 text-slate-600 bg-slate-50 italic rounded-r-md">
-        如果没有跨请求状态污染的问题（客户端渲染或使用单独实例的 SSR），这种模式非常轻量级。
-      </blockquote>
-      <p>但如果你希望按组件树进行状态隔离，或者利用 Vue 开发者工具的追踪功能，还是推荐上 Pinia。如果非要坚持原生，可以使用 <code class="bg-slate-100 text-pink-500 px-1 py-0.5 rounded text-sm">provide / inject</code>，结合 <code class="bg-slate-100 text-pink-500 px-1 py-0.5 rounded text-sm">readonly</code>。</p>
-    `,
-    points: 156,
-    isAccepted: true,
-    createdAt: '2026-04-10 11:30:00',
-    userVoted: 0,
-    comments: [
-      {
-        id: 101,
-        author: { name: '好奇宝宝', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Curious&scale=200' },
-        content: '请问这样的 Store 模式在 **SSR** 下有什么坑吗？',
-        createdAt: '2026-04-10 13:00:00',
-      },
-      {
-        id: 102,
-        author: { name: '尤大粉', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Evan&scale=200' },
-        content: 'SSR 下单例会造成跨请求污染，需要用工厂函数 `createStore()` 搭配 `provide`。',
-        createdAt: '2026-04-10 13:20:00',
-      },
-    ] as Comment[],
-  },
-  {
-    id: 2,
-    author: { name: '全栈修理工', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Jack&scale=200' },
-    content: '<p>同意楼上。如果你担心热更新或者 SSR 的单例污染，建议包装在函数中并在 App 级别 provide：</p><pre class="bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto my-4 text-sm font-mono"><code class="language-ts">export function createStore() {\n  return reactive({ count: 0 })\n}</code></pre>',
-    points: 42,
-    isAccepted: false,
-    createdAt: '2026-04-10 12:15:00',
-    userVoted: 0,
-    comments: [] as Comment[],
-  },
-  {
-    id: 3,
-    author: { name: 'CtrlC_CtrlV', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Bob&scale=200' },
-    content: '<p>直接用 Pinia 啊，何必自己造轮子呢，性能优化和 TS 推导官方都帮你做好了。直接用 Pinia 啊，何必自己造轮子呢，性能优化和 TS 推导官方都帮你做好了。</p>',
-    points: -2,
-    isAccepted: false,
-    createdAt: '2026-04-10 14:00:00',
-    userVoted: -1,
-    comments: [] as Comment[],
-  }
-])
+const answers = computed(() => getAnswersByQuestionId(questionId))
 
 // 评论区展开状态：key 为 answerId
 const expandedComments = ref<Record<number, boolean>>({})
@@ -120,14 +63,18 @@ const toggleComments = (answerId: number) => {
   expandedComments.value[answerId] = !expandedComments.value[answerId]
 }
 
-const submitComment = (answer: (typeof answers.value)[0]) => {
+const submitComment = (answer: Answer) => {
   const text = (commentInputs.value[answer.id] ?? '').trim()
   if (!text) return
   answer.comments.push({
     id: Date.now(),
-    author: { name: '我', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
+    author: { name: profileName, avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
     content: text,
-    createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+    createdAt: (() => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const now = new Date();
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    })()
   })
   commentInputs.value[answer.id] = ''
 }
@@ -173,16 +120,20 @@ const toggleEditor = () => {
 
 const submitAnswer = () => {
   if (!answerContent.value.trim()) return
-  // Mock add
-  answers.value.push({
+  submitAnswerToStore({
     id: Date.now(),
-    author: { name: '我', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
+    questionId: questionId,
+    author: { name: profileName, avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
     content: answerContent.value,
     points: 0,
     isAccepted: false,
-    createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+    createdAt: (() => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const now = new Date();
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    })(),
     userVoted: 0,
-    comments: [] as Comment[],
+    comments: []
   })
   answerContent.value = ''
   showEditor.value = false
