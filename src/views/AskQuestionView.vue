@@ -81,7 +81,11 @@ const submitQuestion = () => {
       name: '我', // We could fetch from Profile string
       avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200'
     },
-    time: '刚刚',
+    time: (() => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const now = new Date();
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    })(),
     category: '技术问答',
     answersCount: 0,
     viewsCount: 0,

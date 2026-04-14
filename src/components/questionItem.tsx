@@ -11,6 +11,25 @@ export const QuestionItem = defineComponent({
     }
   },
   setup(props) {
+    const timeAgo = (dateStr: string) => {
+      if (!dateStr || !dateStr.includes('-')) return dateStr;
+      const date = new Date(dateStr.replace(/-/g, '/'));
+      if (isNaN(date.getTime())) return dateStr;
+      
+      const diff = Date.now() - date.getTime();
+      const mins = Math.floor(diff / 60000);
+      
+      if (mins < 1) return '刚刚';
+      if (mins < 60) return `${mins} 分钟前`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours} 小时前`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days} 天前`;
+      const months = Math.floor(days / 30);
+      if (months < 12) return `${months} 个月前`;
+      return `${Math.floor(months / 12)} 年前`;
+    };
+
     return () => {
       const { question } = props
       
@@ -32,7 +51,7 @@ export const QuestionItem = defineComponent({
               <span class="truncate">{question.author.name}</span>
             </div>
             <span class="text-gray-300">•</span>
-            <span>{question.time}</span>
+            <span>{timeAgo(question.time)}</span>
           </div>
 
           {/* Title */}

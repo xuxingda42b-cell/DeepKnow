@@ -16,9 +16,11 @@ export interface Question {
   isResolved: boolean
 }
 
-// Load from localStorage or empty array
+import { questionsData } from '../data/questions'
+
+// Load from localStorage or mock data
 const savedQuestions = localStorage.getItem('user_questions')
-const initialQuestions = savedQuestions ? JSON.parse(savedQuestions) : []
+const initialQuestions = savedQuestions ? JSON.parse(savedQuestions) : questionsData
 
 export const myQuestions = ref<Question[]>(initialQuestions)
 
