@@ -6,7 +6,7 @@ import * as DOMPurifyPkg from 'dompurify'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
 import { myQuestions, deleteQuestion, incrementViews } from '../store/questions'
 
-import { getAnswersByQuestionId, submitAnswerToStore, type Answer } from '../store/answers'
+import { getAnswersByQuestionId, submitAnswerToStore, deleteAnswer, type Answer } from '../store/answers'
 
 const marked = markedPkg.marked || markedPkg
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
@@ -81,6 +81,18 @@ const submitComment = (answer: Answer) => {
     })()
   })
   commentInputs.value[answer.id] = ''
+}
+
+const deleteComment = (answer: Answer, commentId: number) => {
+  if (confirm('确定要删除这条评论吗？')) {
+    answer.comments = answer.comments.filter(c => c.id !== commentId)
+  }
+}
+
+const doDeleteAnswer = (answerId: number) => {
+  if (confirm('确定要删除这个回答吗？')) {
+    deleteAnswer(answerId)
+  }
 }
 
 // Sort Answers: Accepted -> Points Descending -> Chronological
@@ -318,6 +330,14 @@ const toggleCollect = () => {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" /></svg>
                 举报
               </button>
+              <button 
+                v-if="answer.author.name === profileName"
+                @click="doDeleteAnswer(answer.id)"
+                class="flex items-center gap-1 hover:text-red-500 transition-colors ml-auto text-red-400"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                删除
+              </button>
             </div>
 
             <!-- 评论区 -->
@@ -340,6 +360,13 @@ const toggleCollect = () => {
                   <div class="flex items-baseline gap-1.5 flex-wrap">
                     <span class="text-xs font-semibold text-slate-700 shrink-0">{{ comment.author.name }}</span>
                     <span class="text-[11px] text-slate-400 shrink-0">{{ formatDate(comment.createdAt) }}</span>
+                    <button 
+                      v-if="comment.author.name === profileName"
+                      @click="deleteComment(answer, comment.id)"
+                      class="text-[11px] text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity ml-auto sm:ml-2 focus:opacity-100 cursor-pointer"
+                    >
+                      删除
+                    </button>
                   </div>
                   <!-- 评论内容支持 Markdown/HTML 渲染 -->
                   <div

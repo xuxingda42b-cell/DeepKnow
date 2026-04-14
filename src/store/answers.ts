@@ -1,4 +1,5 @@
 import { ref, watch } from 'vue'
+import { myQuestions } from './questions'
 
 export interface Comment {
   id: number
@@ -92,6 +93,10 @@ export const getAnswersByQuestionId = (questionId: string) => {
 
 export const submitAnswerToStore = (answer: Answer) => {
   allAnswers.value.push(answer)
+  const q = myQuestions.value.find(q => String(q.id) === String(answer.questionId))
+  if (q) {
+    q.answersCount++
+  }
 }
 
 export const updateAnswer = (updatedAnswer: Answer) => {
@@ -100,3 +105,15 @@ export const updateAnswer = (updatedAnswer: Answer) => {
     allAnswers.value[index] = updatedAnswer
   }
 }
+
+export const deleteAnswer = (answerId: number) => {
+  const answer = allAnswers.value.find(a => a.id === answerId)
+  if (answer) {
+    const q = myQuestions.value.find(q => String(q.id) === String(answer.questionId))
+    if (q) {
+      q.answersCount = Math.max(0, q.answersCount - 1)
+    }
+  }
+  allAnswers.value = allAnswers.value.filter(a => a.id !== answerId)
+}
+
