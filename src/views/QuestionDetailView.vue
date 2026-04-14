@@ -81,6 +81,20 @@ const submitComment = (answer: Answer) => {
       return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     })()
   })
+
+  const plainTarget = answer.content.replace(/<[^>]*>?/gm, '')
+  addNotification({
+    id: Date.now() + 1,
+    type: 'mentions',
+    avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200',
+    sender: profileName,
+    action: '评论了你的回答',
+    content: text,
+    target: plainTarget.slice(0, 30) + (plainTarget.length > 30 ? '...' : ''),
+    time: '刚刚',
+    isRead: false
+  })
+
   commentInputs.value[answer.id] = ''
 }
 
@@ -106,7 +120,7 @@ const sortedAnswers = computed(() => {
   })
 })
 
-const handleVote = (answer: { points: number; userVoted: number }, type: 1 | -1) => {
+const handleVote = (answer: any, type: 1 | -1) => {
   if (answer.userVoted === type) {
     // Cancel vote
     answer.points -= type
@@ -118,6 +132,21 @@ const handleVote = (answer: { points: number; userVoted: number }, type: 1 | -1)
     }
     answer.points += type
     answer.userVoted = type
+    
+    if (type === 1) {
+      const plainTarget = answer.content ? answer.content.replace(/<[^>]*>?/gm, '') : ''
+      addNotification({
+        id: Date.now(),
+        type: 'likes',
+        avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200',
+        sender: profileName,
+        action: '赞了你的回答',
+        content: '',
+        target: plainTarget.slice(0, 30) + (plainTarget.length > 30 ? '...' : ''),
+        time: '刚刚',
+        isRead: false
+      })
+    }
   }
 }
 
@@ -152,6 +181,20 @@ const submitAnswer = () => {
     userVoted: 0,
     comments: []
   })
+
+  const plainText = answerContent.value.replace(/<[^>]*>?/gm, '')
+  addNotification({
+    id: Date.now() + 1,
+    type: 'mentions',
+    avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200',
+    sender: profileName,
+    action: '回答了你的问题',
+    content: plainText.slice(0, 50) + (plainText.length > 50 ? '...' : ''),
+    target: question.value.title,
+    time: '刚刚',
+    isRead: false
+  })
+
   answerContent.value = ''
   showEditor.value = false
 }
