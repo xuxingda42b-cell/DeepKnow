@@ -9,6 +9,7 @@ export interface Article {
   createdAt: string
   viewsCount: number
   summary: string        // 纯文本摘要（截取前100字）
+  comments?: any[]       // 文章评论
 }
 
 const saved = localStorage.getItem('user_articles')
@@ -19,6 +20,7 @@ watch(myArticles, (v) => {
 }, { deep: true })
 
 export const addArticle = (a: Article) => {
+  if (!a.comments) a.comments = []
   myArticles.value.unshift(a)
 }
 
