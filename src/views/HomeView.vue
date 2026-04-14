@@ -21,7 +21,7 @@ const getQuestionsByTab = () => {
 
   if (queryStr.value) {
     const qlower = queryStr.value.toLowerCase()
-    list = list.filter(q => 
+    list = list.filter(q =>
       q.title.toLowerCase().includes(qlower) ||
       q.description.toLowerCase().includes(qlower) ||
       q.tags.some(t => t.name.toLowerCase().includes(qlower)) ||
@@ -41,7 +41,7 @@ const getQuestionsByTab = () => {
 
 <template>
   <div class="flex flex-col w-full animate-fade-in relative block">
-    
+
     <!-- 未登录态：着陆页视图 -->
     <div v-if="!isLoggedIn" class="py-20 text-center">
       <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
@@ -50,15 +50,15 @@ const getQuestionsByTab = () => {
       <p class="text-lg text-gray-500 mb-8 max-w-2xl mx-auto">
         加入我们的开发者社区，与成千上万的同行在线问答。无论是调试 bug，还是探讨架构设计，这里都有您想要的答案。
       </p>
-      
+
       <div class="flex items-center justify-center gap-4">
-        <router-link 
+        <router-link
           to="/login"
           class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium transition shadow-lg shadow-blue-500/30"
         >
           立即登录
         </router-link>
-        <router-link 
+        <router-link
           to="/register"
           class="bg-white border hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-medium transition"
         >

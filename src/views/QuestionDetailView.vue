@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
-import { myQuestions, deleteQuestion } from '../store/questions'
+import { myQuestions, deleteQuestion, incrementViews } from '../store/questions'
 
 import { getAnswersByQuestionId, submitAnswerToStore, type Answer } from '../store/answers'
 
@@ -24,6 +24,10 @@ const questionId = route.params.id as string
 const realQ = myQuestions.value.find(q => String(q.id) === String(questionId))
 const savedProfile = localStorage.getItem('profile_data')
 const profileName = savedProfile ? JSON.parse(savedProfile).name || '我' : '我'
+
+if (realQ) {
+  incrementViews(questionId)
+}
 
 // Mock or real Question Data
 const question = ref({

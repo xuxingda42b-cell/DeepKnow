@@ -36,3 +36,10 @@ export const addQuestion = (q: Question) => {
 export const deleteQuestion = (id: string) => {
   myQuestions.value = myQuestions.value.filter(q => q.id !== id)
 }
+
+export const incrementViews = (id: string) => {
+  const q = myQuestions.value.find(q => String(q.id) === String(id))
+  if (q) {
+    q.viewsCount++
+  }
+}

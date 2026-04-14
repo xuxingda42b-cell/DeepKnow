@@ -1,6 +1,7 @@
 import { defineComponent, type PropType } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Question } from '../data/questions'
+import { getAnswersByQuestionId } from '../store/answers'
 
 export const QuestionItem = defineComponent({
   name: 'QuestionItem',
@@ -15,10 +16,10 @@ export const QuestionItem = defineComponent({
       if (!dateStr || !dateStr.includes('-')) return dateStr;
       const date = new Date(dateStr.replace(/-/g, '/'));
       if (isNaN(date.getTime())) return dateStr;
-      
+
       const diff = Date.now() - date.getTime();
       const mins = Math.floor(diff / 60000);
-      
+
       if (mins < 1) return '刚刚';
       if (mins < 60) return `${mins} 分钟前`;
       const hours = Math.floor(mins / 60);
@@ -32,7 +33,8 @@ export const QuestionItem = defineComponent({
 
     return () => {
       const { question } = props
-      
+      const realAnswersCount = getAnswersByQuestionId(question.id).length || question.answersCount
+
       return (
         <RouterLink to={`/question/${question.id}`} class="block p-4 bg-white hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0 group cursor-pointer">
           {/* Header Metas */}
@@ -42,9 +44,9 @@ export const QuestionItem = defineComponent({
             </span>
             <span class="text-gray-300">•</span>
             <div class="flex items-center hover:text-gray-700 transition-colors cursor-pointer">
-              <img 
-                src={question.author.avatar} 
-                alt={question.author.name} 
+              <img
+                src={question.author.avatar}
+                alt={question.author.name}
                 class="w-4 h-4 rounded-full mr-1.5 object-cover"
                 loading="lazy"
               />
@@ -90,7 +92,7 @@ export const QuestionItem = defineComponent({
                   </svg>
                 )}
                 <span class={question.isResolved ? 'text-green-600 font-medium' : ''}>
-                  {question.answersCount} 回答
+                  {realAnswersCount} 回答
                 </span>
               </div>
               <div class="flex items-center gap-1">
