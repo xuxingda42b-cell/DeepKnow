@@ -1,5 +1,5 @@
 <template>
-  <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+  <div class="py-8 px-4 sm:px-6 lg:px-8 w-full">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
       <!-- 头部 -->
       <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-wrap gap-4">
@@ -115,6 +115,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { myCollections, removeCollection, type CollectionItem } from '../store/collections'
 
 const filterType = ref('all')
@@ -126,8 +127,13 @@ const filteredCollections = computed(() => {
 })
 
 const handleRemove = (item: CollectionItem) => {
-  if (window.confirm('确定要取消收藏吗？')) {
+  ElMessageBox.confirm('确定要取消收藏吗？', '取消收藏', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
     removeCollection(item.id, item.type)
-  }
+    ElMessage.success('已取消收藏')
+  }).catch(() => {})
 }
 </script>

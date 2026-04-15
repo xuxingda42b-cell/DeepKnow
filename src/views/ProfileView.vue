@@ -1,5 +1,5 @@
 <template>
-  <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+  <div class="py-8 px-4 sm:px-6 lg:px-8 w-full">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <!-- 头图背景 -->
       <div class="h-32 bg-gradient-to-r from-blue-500 to-blue-400"></div>

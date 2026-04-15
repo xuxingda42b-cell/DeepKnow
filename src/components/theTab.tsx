@@ -13,7 +13,7 @@ export const TheTab = defineComponent({
 
     return () => (
       <div class="border-b border-gray-100 bg-white px-4 sticky top-14 z-40">
-        <nav class="-mb-px flex space-x-6 max-w-4xl mx-auto" aria-label="Tabs">
+        <nav class="-mb-px flex space-x-6 px-4" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
               onClick={() => handleTabClick(tab)}

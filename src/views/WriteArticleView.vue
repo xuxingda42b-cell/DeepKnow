@@ -1,12 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import * as markedPkg from 'marked'
 import * as DOMPurifyPkg from 'dompurify'
 import { addArticle, getArticleById, updateArticle } from '../store/articles'
 import { saveDraft, getDraftById, deleteDraft } from '../store/drafts'
+import { ElMessage } from 'element-plus'
 
-const marked = markedPkg.marked || markedPkg
+import { markedHighlight } from 'marked-highlight'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github-dark.css'
+import { Marked } from 'marked'
+
+const markedInstance = new Marked()
+
+markedInstance.use(markedHighlight({
+  emptyLangClass: 'hljs',
+  langPrefix: 'hljs language-',
+  highlight(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value
+    }
+    return hljs.highlightAuto(code, ['javascript', 'typescript', 'html', 'css', 'python', 'java', 'c++']).value
+  }
+}))
+
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
 const router = useRouter()
@@ -79,7 +96,7 @@ onMounted(() => {
 
 const parsedContent = computed(() => {
   if (!content.value) return '<p class="text-slate-400 italic">开始输入内容，右侧实时预览...</p>'
-  return DOMPurify.sanitize(marked.parse(content.value, { breaks: true, gfm: true }) as string)
+  return DOMPurify.sanitize(markedInstance.parse(content.value, { breaks: true, gfm: true }) as string, { ADD_ATTR: ['class', 'target'] })
 })
 
 const wordCount = computed(() => content.value.replace(/\s/g, '').length)
@@ -122,13 +139,62 @@ const insertMarkdown = (prefix: string, suffix = '', placeholder = '文字') => 
   }, 0)
 }
 
+const isAIOptimizing = ref(false)
+
+const optimizeContentWithAI = () => {
+  const el = textareaRef.value
+  if (!el) return
+  
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const hasSelection = start !== end
+  const textToOptimize = hasSelection ? content.value.slice(start, end) : content.value
+
+  if (!textToOptimize.trim()) {
+    ElMessage.warning('内容为空，无法进行 AI 润色')
+    return
+  }
+
+  isAIOptimizing.value = true
+  ElMessage.info({ message: hasSelection ? '✨ AI 正在努力分析选中的段落...' : '✨ AI 正在从头到尾阅读分析你的文章...', duration: 2000 })
+  
+  setTimeout(() => {
+    const aiTips = [
+      '\n\n> ✨ **AI 润色批注**：你的段落结构已经梳理得非常清晰。如果后续更新可以通过添加核心的实际代码片段或报错截图，这部分的表达会更具实战气息。',
+      '\n\n> ✨ **AI 润色批注**：目前行文流畅度极佳。一个小建议：在讲述复杂的技术难点时，可以适当地将其拆解为多个步骤式的列表，更能降低读者的认知门槛。',
+      '\n\n> ✨ **AI 润色批注**：这篇文章显得非常具有专业性。如果能在开篇部分补充一两句关于这项技术的使用场景和背景介绍，将大大帮助初学者更快地代入沉浸状态。'
+    ]
+    const randomTip = aiTips[Math.floor(Math.random() * aiTips.length)]
+
+    if (hasSelection) {
+      const before = content.value.slice(0, start)
+      const after = content.value.slice(end)
+      const newSelected = textToOptimize + randomTip
+      content.value = before + newSelected + after
+      
+      setTimeout(() => {
+        el.focus()
+        el.setSelectionRange(start, start + newSelected.length)
+      }, 0)
+    } else {
+      content.value = content.value + randomTip
+      setTimeout(() => {
+        el.scrollTop = el.scrollHeight
+      }, 0)
+    }
+
+    isAIOptimizing.value = false
+    ElMessage.success('🎉 AI 润色完成，请查看批注！')
+  }, 2000)
+}
+
 const handlePublish = () => {
   if (!title.value.trim()) {
-    alert('请输入文章标题')
+    ElMessage.warning('请输入文章标题')
     return
   }
   if (!content.value.trim()) {
-    alert('请输入文章内容')
+    ElMessage.warning('请输入文章内容')
     return
   }
   isSaving.value = true
@@ -188,21 +254,62 @@ const handleSaveDraft = () => {
     updatedAt
   })
   
-  alert('草稿已保存！可以前往"头像 -> 我的草稿"查看。')
+  ElMessage.success('草稿已保存，可在「头像 → 我的草稿」中查看')
+}
+
+const isMobile = ref(false)
+const layoutContainer = ref<HTMLElement | null>(null)
+const editorSize = ref(50) // percentage
+
+onMounted(() => {
+  isMobile.value = window.innerWidth < 768
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
+
+const startDrag = () => {
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('touchmove', onDrag, { passive: false })
+  document.addEventListener('mouseup', stopDrag)
+  document.addEventListener('touchend', stopDrag)
+}
+
+const onDrag = (e: MouseEvent | TouchEvent) => {
+  if (e.cancelable) e.preventDefault()
+  if (!layoutContainer.value) return
+  
+  const rect = layoutContainer.value.getBoundingClientRect()
+  if (isMobile.value) {
+    const clientY = 'touches' in e ? (e as TouchEvent).touches[0]?.clientY || 0 : (e as MouseEvent).clientY
+    const percentage = ((clientY - rect.top) / rect.height) * 100
+    if (percentage > 15 && percentage < 85) editorSize.value = percentage
+  } else {
+    const clientX = 'touches' in e ? (e as TouchEvent).touches[0]?.clientX || 0 : (e as MouseEvent).clientX
+    const percentage = ((clientX - rect.left) / rect.width) * 100
+    if (percentage > 15 && percentage < 85) editorSize.value = percentage
+  }
+}
+
+const stopDrag = () => {
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('touchmove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('touchend', stopDrag)
 }
 </script>
 
 <template>
   <div class="flex flex-col h-[calc(100vh-56px)] overflow-hidden bg-gray-50">
     <!-- Top Bar -->
-    <div class="shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+    <div class="shrink-0 bg-white border-b border-gray-200 px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
       <input
         v-model="title"
         type="text"
         placeholder="输入文章标题..."
-        class="flex-1 text-xl font-bold text-gray-900 placeholder-gray-300 bg-transparent focus:outline-none"
+        class="flex-1 text-lg sm:text-xl font-bold text-gray-900 placeholder-gray-300 bg-transparent focus:outline-none min-w-0"
       />
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-2 shrink-0 justify-end sm:justify-start">
         <span class="text-xs text-gray-400 hidden sm:block">{{ wordCount }} 字</span>
         <button
           @click="handleSaveDraft"
@@ -213,17 +320,20 @@ const handleSaveDraft = () => {
         <button
           @click="handlePublish"
           :disabled="isSaving"
-          class="px-5 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm"
+          class="px-5 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm whitespace-nowrap"
         >
           {{ isSaving ? (isEditing ? '保存中...' : '发布中...') : (isEditing ? '保存修改' : '发布文章') }}
         </button>
       </div>
     </div>
 
-    <!-- Main Two-Column Layout -->
-    <div class="flex flex-1 min-h-0 divide-x divide-gray-200">
-      <!-- Left: Editor -->
-      <div class="flex flex-col w-1/2 min-w-0 bg-white">
+    <!-- Main Layout (Resizable Stacked or Side-by-side) -->
+    <div ref="layoutContainer" class="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden relative">
+      <!-- Left/Top: Editor -->
+      <div 
+        class="flex flex-col bg-white shrink-0 min-h-0 min-w-0"
+        :style="{ flexBasis: editorSize + '%', width: isMobile ? '100%' : editorSize + '%', height: isMobile ? editorSize + '%' : '100%' }"
+      >
         <!-- Toolbar -->
         <div class="shrink-0 flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-gray-100 bg-gray-50">
           <button @click="insertMarkdown('**', '**', '加粗文字')" title="加粗" class="toolbar-btn">
@@ -258,6 +368,21 @@ const handleSaveDraft = () => {
           <button @click="insertMarkdown('[', '](https://)', '链接文字')" title="链接" class="toolbar-btn">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
           </button>
+          
+          <div class="w-px h-4 bg-gray-300 mx-2"></div>
+          
+          <button 
+            @click="optimizeContentWithAI" 
+            :disabled="isAIOptimizing"
+            class="toolbar-btn text-[12px] font-bold gap-1 !w-auto px-2 disabled:opacity-50 transition-all border border-transparent"
+            :class="isAIOptimizing ? 'text-gray-400 cursor-not-allowed' : 'text-fuchsia-600 hover:text-fuchsia-700 bg-fuchsia-50 hover:bg-fuchsia-100 hover:border-fuchsia-200'"
+            title="AI 一键润色选取段落或全文"
+          >
+            <svg v-if="isAIOptimizing" class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+            <span>{{ isAIOptimizing ? 'AI 润色中...' : '智能润色 ✨' }}</span>
+          </button>
+
           <div class="ml-auto text-[11px] text-gray-400 hidden md:block">支持 Markdown 语法</div>
         </div>
 
@@ -303,8 +428,19 @@ const handleSaveDraft = () => {
         ></textarea>
       </div>
 
-      <!-- Right: Preview -->
-      <div class="flex flex-col w-1/2 min-w-0 bg-white">
+      <!-- Divider for resizing -->
+      <div 
+        @mousedown="startDrag" 
+        @touchstart.passive="startDrag"
+        class="flex items-center justify-center shrink-0 bg-gray-100/80 hover:bg-blue-400 active:bg-blue-500 transition-colors z-10 select-none backdrop-blur-sm"
+        :class="[isMobile ? 'h-3 cursor-row-resize w-full shadow-inner' : 'w-3 cursor-col-resize h-full shadow-[inset_0_0_2px_rgba(0,0,0,0.1)]']"
+      >
+        <div class="w-8 h-1 bg-gray-300 rounded-full" v-if="isMobile"></div>
+        <div class="h-8 w-1 bg-gray-300 rounded-full" v-else></div>
+      </div>
+
+      <!-- Right/Bottom: Preview -->
+      <div class="flex flex-col flex-1 min-h-0 min-w-0 bg-white shadow-[0_-4px_6px_-6px_rgba(0,0,0,0.1)] md:shadow-[inset_4px_0_6px_-6px_rgba(0,0,0,0.1)]">
         <div class="shrink-0 px-4 py-2.5 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
           <span class="text-xs text-gray-400 font-medium">实时预览</span>

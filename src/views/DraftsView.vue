@@ -1,5 +1,5 @@
 <template>
-  <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+  <div class="py-8 px-4 sm:px-6 lg:px-8 w-full">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
       <!-- 头部 -->
       <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-wrap gap-4">
@@ -57,11 +57,17 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { myDrafts, deleteDraft } from '../store/drafts'
 
 const handleRemove = (id: string) => {
-  if (window.confirm('确定要删除这篇草稿吗？')) {
+  ElMessageBox.confirm('确定要删除这篇草稿吗？此操作不可撤销。', '删除草稿', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
     deleteDraft(id)
-  }
+    ElMessage.success('草稿已删除')
+  }).catch(() => {})
 }
 </script>

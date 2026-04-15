@@ -8,6 +8,9 @@ export interface ArticleComment {
     name: string
     avatar: string
   }
+  likes?: number
+  userLiked?: boolean
+  userDisliked?: boolean
 }
 
 export interface Article {

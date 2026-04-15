@@ -1,5 +1,5 @@
 <template>
-  <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full">
+  <div class="py-8 px-4 sm:px-6 lg:px-8 w-full">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <!-- 头部标识 -->
       <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -13,14 +13,14 @@
       <!-- 表单区域 -->
       <div class="px-8 py-6">
         <form @submit.prevent="handleSave" class="space-y-6">
-          
+
           <!-- 头像上传区 -->
           <div class="flex items-center gap-6 pb-6 border-b border-gray-50">
             <div class="relative group cursor-pointer" @click="triggerFileInput">
               <input type="file" ref="fileInputRef" accept="image/*" class="hidden" @change="handleFileChange" />
-              <img 
-                :src="formData.avatarUrl" 
-                alt="User Avatar" 
+              <img
+                :src="formData.avatarUrl"
+                alt="User Avatar"
                 class="w-20 h-20 rounded-full border border-gray-200 bg-gray-50 object-cover group-hover:opacity-80 transition-opacity"
               />
               <button type="button" class="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1.5 text-white shadow-sm hover:bg-blue-700 transition-colors">
@@ -33,31 +33,40 @@
             </div>
           </div>
 
-          <!-- 基础信息与详细信息双栏布局 -->
+          <!-- 双栏布局 -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-            
+
             <div class="col-span-1 sm:col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">昵称</label>
-              <input v-model="formData.name" type="text" placeholder="您的称呼（起个好听的名字吧）" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <input v-model="formData.name" type="text" placeholder="您的称呼" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
-            
+
             <div class="col-span-1 sm:col-span-2">
               <label class="block text-sm font-medium text-gray-700 mb-1">一句话简介</label>
               <input v-model="formData.bio" type="text" placeholder="简单介绍一下你自己..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
 
+            <!-- 性别：El-Select -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">性别</label>
-              <select v-model="formData.gender" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm">
-                <option value="none">保密</option>
-                <option value="male">男</option>
-                <option value="female">女</option>
-              </select>
+              <el-select v-model="formData.gender" class="w-full" placeholder="请选择性别">
+                <el-option label="保密" value="none" />
+                <el-option label="男" value="male" />
+                <el-option label="女" value="female" />
+              </el-select>
             </div>
 
+            <!-- 生日：El-DatePicker -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">生日</label>
-              <input v-model="formData.birthday" type="date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
+              <el-date-picker
+                v-model="formData.birthday"
+                type="date"
+                placeholder="选择出生日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                class="w-full"
+              />
             </div>
 
             <div class="col-span-1 sm:col-span-2 pt-2 pb-1">
@@ -73,21 +82,21 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">邮箱地址</label>
               <input v-model="formData.email" type="email" placeholder="example@email.com" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm" />
             </div>
-            
+
             <div class="col-span-1 sm:col-span-2 pt-2 pb-1">
               <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">教育与社交</h3>
             </div>
 
+            <!-- 学历：El-Select -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">最高学历</label>
-              <select v-model="formData.education" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white text-sm">
-                <option value="">请选择...</option>
-                <option value="highschool">高中及以下</option>
-                <option value="associate">大专</option>
-                <option value="bachelor">本科</option>
-                <option value="master">硕士</option>
-                <option value="doctor">博士</option>
-              </select>
+              <el-select v-model="formData.education" class="w-full" placeholder="请选择学历">
+                <el-option label="高中及以下" value="highschool" />
+                <el-option label="大专" value="associate" />
+                <el-option label="本科" value="bachelor" />
+                <el-option label="硕士" value="master" />
+                <el-option label="博士" value="doctor" />
+              </el-select>
             </div>
 
             <div>
@@ -125,6 +134,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 
@@ -156,9 +166,7 @@ onMounted(() => {
 })
 
 const triggerFileInput = () => {
-  if (fileInputRef.value) {
-    fileInputRef.value.click()
-  }
+  fileInputRef.value?.click()
 }
 
 const handleFileChange = (event: Event) => {
@@ -166,10 +174,9 @@ const handleFileChange = (event: Event) => {
   const file = target.files?.[0]
   if (file) {
     if (file.size > 2 * 1024 * 1024) {
-      alert('头像文件大小不能超过 2MB')
+      ElMessage.warning('头像文件大小不能超过 2MB')
       return
     }
-    
     const reader = new FileReader()
     reader.onload = (e) => {
       formData.avatarUrl = e.target?.result as string
@@ -179,9 +186,8 @@ const handleFileChange = (event: Event) => {
 }
 
 const handleSave = () => {
-  // 保存动作
   localStorage.setItem('profile_data', JSON.stringify(formData))
-  alert('资料更新成功！')
+  ElMessage.success('资料更新成功！')
   router.push('/profile')
 }
 </script>

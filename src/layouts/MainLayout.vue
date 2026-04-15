@@ -9,7 +9,7 @@ import { TopNav } from '../components/topNav'
     <TopNav />
     
     <!-- Main Content Area (Level 2 Routes render here) -->
-    <div class="flex-1 w-full max-w-5xl mx-auto flex flex-col relative">
+    <div class="flex-1 w-full flex flex-col relative">
       <RouterView v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />

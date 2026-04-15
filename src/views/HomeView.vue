@@ -4,10 +4,9 @@ import { useRoute } from 'vue-router'
 import { TheTab } from '../components/theTab'
 import { QuestionItem } from '../components/questionItem'
 import { ArticleItem } from '../components/articleItem'
-import { myQuestions } from '../store/questions'
-import { myArticles } from '../store/articles'
+import { type Question, myQuestions } from '../store/questions'
+import { type Article, myArticles } from '../store/articles'
 import { isLoggedIn } from '../store/user'
-import AiAssistant from '../components/AiAssistant.vue'
 
 const route = useRoute()
 const currentTab = ref('推荐')
@@ -19,7 +18,7 @@ const handleTabChange = (tab: string) => {
   currentTab.value = tab
 }
 
-// 问题列表（根据 tab 和搜索词过滤）
+// 问题列表（仅根据搜索词过滤）
 const filteredQuestions = computed(() => {
   let list = myQuestions.value
   if (queryStr.value) {
@@ -31,12 +30,10 @@ const filteredQuestions = computed(() => {
       q.author.name.toLowerCase().includes(ql)
     )
   }
-  if (currentTab.value === '热门') return [...list].sort((a, b) => b.viewsCount - a.viewsCount)
-  if (currentTab.value === '最新') return list
-  return [...list].reverse()
+  return list
 })
 
-// 文章列表（根据搜索词过滤）
+// 文章列表（仅根据搜索词过滤）
 const filteredArticles = computed(() => {
   let list = myArticles.value
   if (queryStr.value) {
@@ -51,13 +48,37 @@ const filteredArticles = computed(() => {
   return list
 })
 
-// 合并 feed（全部模式下交叉显示）
+// 合并 feed 并根据当前 tab 统一排序
 const feedItems = computed(() => {
-  if (contentType.value === 'question') return filteredQuestions.value.map(q => ({ type: 'question' as const, data: q }))
-  if (contentType.value === 'article') return filteredArticles.value.map(a => ({ type: 'article' as const, data: a }))
-  const questions = filteredQuestions.value.map(q => ({ type: 'question' as const, data: q, date: q.time }))
-  const articles = filteredArticles.value.map(a => ({ type: 'article' as const, data: a, date: a.createdAt }))
-  return [...questions, ...articles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  type FeedItem =
+    | { type: 'question'; data: Question; date: string; views: number }
+    | { type: 'article'; data: Article; date: string; views: number }
+
+  let items: FeedItem[] = []
+
+  if (contentType.value === 'all' || contentType.value === 'question') {
+    items = items.concat(
+      filteredQuestions.value.map(q => ({ type: 'question' as const, data: q, date: q.time, views: q.viewsCount }))
+    )
+  }
+
+  if (contentType.value === 'all' || contentType.value === 'article') {
+    items = items.concat(
+      filteredArticles.value.map(a => ({ type: 'article' as const, data: a, date: a.createdAt, views: a.viewsCount }))
+    )
+  }
+
+  if (currentTab.value === '热门') {
+    return items.sort((a, b) => b.views - a.views)
+  }
+
+  if (currentTab.value === '最新') {
+    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }
+
+  // 推荐模式: 可按某种不同于最新的顺序，这里按旧到新或者混合
+  // 为保持原来针对问题的 reverse 行为（即最老的在前面）同时兼容合并后的数据：
+  return items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 })
 </script>
 
@@ -88,7 +109,7 @@ const feedItems = computed(() => {
 
       <!-- 内容类型切换 -->
       <div class="sticky top-[56px] z-30 bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4">
-        <div class="max-w-4xl mx-auto flex gap-1 py-2">
+        <div class="flex gap-1 py-2">
           <button
             v-for="opt in [{ key: 'all', label: '全部' }, { key: 'question', label: '问题' }, { key: 'article', label: '文章' }]"
             :key="opt.key"
@@ -108,29 +129,51 @@ const feedItems = computed(() => {
       <!-- Feed -->
       <main class="flex-1 w-full p-4 py-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <template v-if="feedItems.length > 0">
-            <template v-for="item in feedItems" :key="item.data.id">
-              <QuestionItem v-if="item.type === 'question'" :question="item.data as any" />
-              <ArticleItem v-else :article="item.data as any" />
+          <TransitionGroup name="list" tag="div" class="relative">
+            <template v-if="feedItems.length > 0">
+              <div v-for="item in feedItems" :key="item.type + '-' + item.data.id" class="w-full bg-white">
+                <QuestionItem v-if="item.type === 'question'" :question="item.data as any" />
+                <ArticleItem v-else :article="item.data as any" />
+              </div>
             </template>
-          </template>
-          <template v-else>
-            <div class="py-16 px-6 text-center">
+            <div v-else key="empty-state" class="py-16 px-6 text-center w-full">
               <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <h3 class="mt-4 text-sm font-medium text-gray-900">{{ queryStr ? `没有找到包含 "${queryStr}" 的内容` : '暂无内容' }}</h3>
               <p class="mt-1 text-sm text-gray-500">{{ queryStr ? '换个搜索词试试看吧！' : '还没有人发布，快来成为第一个吧！' }}</p>
             </div>
-          </template>
+          </TransitionGroup>
         </div>
       </main>
 
-      <!-- AI Assistant -->
-      <aside class="fixed right-4 top-16 bottom-4 w-80 hidden xl:flex flex-col z-40">
-        <AiAssistant />
-      </aside>
     </template>
   </div>
 </template>
+
+<style>
+/* Vue 动画生命周期类名 */
+.list-enter-active,
+.list-leave-active,
+.list-move {
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* 具有弹性的过渡 */
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(40px) scale(0.9);
+  filter: blur(8px);
+}
+
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(-40px) scale(0.9);
+  filter: blur(8px);
+}
+
+.list-leave-active {
+  position: absolute;
+  width: 100%;
+}
+</style>
 

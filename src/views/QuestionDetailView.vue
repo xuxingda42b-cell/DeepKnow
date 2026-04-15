@@ -1,15 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import * as markedPkg from 'marked'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import * as DOMPurifyPkg from 'dompurify'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
 import { myQuestions, deleteQuestion, incrementViews } from '../store/questions'
 import { addNotification } from '../store/notifications'
+import { ThumbsUp, ThumbsDown } from 'lucide-vue-next'
+import { getAnswersByQuestionId, submitAnswerToStore, deleteAnswer, type Answer, type Comment } from '../store/answers'
+import { markedHighlight } from 'marked-highlight'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github-dark.css'
+import { Marked } from 'marked'
 
-import { getAnswersByQuestionId, submitAnswerToStore, deleteAnswer, type Answer } from '../store/answers'
+const markedInstance = new Marked()
 
-const marked = markedPkg.marked || markedPkg
+markedInstance.use(markedHighlight({
+  emptyLangClass: 'hljs',
+  langPrefix: 'hljs language-',
+  highlight(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value
+    }
+    // Safe auto-highlight restricting to common languages to avoid weird edge-case guessing parsing html recursively
+    return hljs.highlightAuto(code, ['javascript', 'typescript', 'html', 'css', 'python', 'java', 'c++']).value
+  }
+}))
+
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
 const parseMarkdown = (raw: string) => {
@@ -17,7 +34,7 @@ const parseMarkdown = (raw: string) => {
   // 将 "@文字" 替换为带有蓝色样式的 a 标签，使用独立的 mention-link 类防屏蔽
   const withMentions = raw.replace(/(^|\s)(@[^\s]+)/g, '$1<a href="/profile" class="mention-link">$2</a>')
   // marked.parse may return a promise in some configurations, but defaults to string.
-  return DOMPurify.sanitize(marked.parse(withMentions, { breaks: true, gfm: true }) as string, { ADD_ATTR: ['class', 'target'] })
+  return DOMPurify.sanitize(markedInstance.parse(withMentions, { breaks: true, gfm: true }) as string, { ADD_ATTR: ['class', 'target'] })
 }
 
 const handleMarkdownClick = (e: MouseEvent) => {
@@ -62,10 +79,14 @@ export const useGlobalState = () => globalState</code></pre>
 })
 
 const doDeleteQuestion = () => {
-  if (confirm('确定要删除这个问题吗？此操作不可恢复。')) {
+  ElMessageBox.confirm('确定要删除这个问题吗？此操作不可恢复。', '删除问题', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
     deleteQuestion(question.value.id)
     router.push('/')
-  }
+  }).catch(() => {})
 }
 
 const answers = computed(() => getAnswersByQuestionId(questionId))
@@ -95,6 +116,8 @@ const submitComment = (answer: Answer) => {
     id: Date.now(),
     author: { name: profileName, avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' },
     content: text,
+    likes: 0,
+    userLiked: false,
     createdAt: (() => {
       const pad = (n: number) => n.toString().padStart(2, '0');
       const now = new Date();
@@ -127,14 +150,53 @@ const submitComment = (answer: Answer) => {
 }
 
 const deleteComment = (answer: Answer, commentId: number) => {
-  if (confirm('确定要删除这条评论吗？')) {
+  ElMessageBox.confirm('确定要删除这条评论吗？', '删除评论', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
     answer.comments = answer.comments.filter(c => c.id !== commentId)
-  }
+    ElMessage.success('评论已删除')
+  }).catch(() => {})
 }
 
 const doDeleteAnswer = (answerId: number) => {
-  if (confirm('确定要删除这个回答吗？')) {
+  ElMessageBox.confirm('确定要删除这个回答吗？', '删除回答', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
     deleteAnswer(answerId)
+    ElMessage.success('回答已删除')
+  }).catch(() => {})
+}
+
+const handleCommentLike = (comment: Comment) => {
+  if (comment.likes === undefined) {
+    comment.likes = 0
+    comment.userLiked = false
+  }
+  if (comment.userLiked) {
+    comment.likes = (comment.likes ?? 1) - 1
+    comment.userLiked = false
+  } else {
+    comment.likes = (comment.likes ?? 0) + 1
+    comment.userLiked = true
+    if (comment.userDisliked) {
+      comment.userDisliked = false
+    }
+  }
+}
+
+const handleCommentDislike = (comment: Comment) => {
+  if (comment.userDisliked) {
+    comment.userDisliked = false
+  } else {
+    comment.userDisliked = true
+    if (comment.userLiked) {
+      comment.likes = (comment.likes ?? 1) - 1
+      comment.userLiked = false
+    }
   }
 }
 
@@ -307,7 +369,7 @@ const submitReport = () => {
     isRead: false
   })
 
-  alert('举报已成功提交，感谢您的反馈，工作人员将尽快处理！')
+  ElMessage.success('举报已提交，感谢您的反馈！')
   showReportModal.value = false
 }
 </script>
@@ -316,7 +378,7 @@ const submitReport = () => {
   <div class="animate-fade-in w-full pb-20">
     <!-- Header / Question Area -->
     <div class="bg-white px-4 py-8 sm:px-8 border-b border-gray-200 shadow-sm mb-6">
-      <div class="max-w-4xl mx-auto">
+      <div class="w-full mx-auto">
         <!-- Tags -->
         <div class="flex flex-wrap gap-2 mb-4">
           <span v-for="tag in question.tags" :key="tag" class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer">
@@ -381,7 +443,7 @@ const submitReport = () => {
     </div>
 
     <!-- Answers List Area -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-8">
+    <div class="w-full mx-auto px-4 sm:px-8">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-slate-800">{{ answers.length }} 个回答</h2>
         <span class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full shadow-inner">默认排序 (采纳/高赞优先)</span>
@@ -397,36 +459,6 @@ const submitReport = () => {
           <!-- Accepted Badge Background visual hint -->
           <div v-if="answer.isAccepted" class="absolute top-0 right-0 w-16 h-16 pointer-events-none">
             <div class="absolute transform rotate-45 bg-emerald-400 text-white text-[10px] font-bold py-1 right-[-35px] top-[15px] w-[120px] text-center shadow-sm">已采纳</div>
-          </div>
-
-          <!-- Left: Vote Controls -->
-          <div class="flex flex-col items-center gap-2 shrink-0 w-12 pt-1 border-r border-slate-50 pr-4 sm:pr-0 sm:border-0 sm:w-10">
-            <!-- Upvote -->
-            <button 
-              @click="handleVote(answer, 1)"
-              class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors shadow-sm border border-transparent"
-              :class="answer.userVoted === 1 ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-500'"
-            >
-              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 4l-8 8h16z" /></svg>
-            </button>
-            
-            <span class="font-bold text-slate-700 select-none text-center tabular-nums w-full" :class="{'text-blue-600': answer.userVoted === 1, 'text-red-500': answer.userVoted === -1}">
-              {{ answer.points }}
-            </span>
-            
-            <!-- Downvote -->
-            <button 
-              @click="handleVote(answer, -1)"
-              class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors shadow-sm border border-transparent"
-              :class="answer.userVoted === -1 ? 'bg-red-100 text-red-600 border-red-200' : 'bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500'"
-            >
-              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 20l8-8H4z" /></svg>
-            </button>
-
-            <!-- Accepted icon -->
-            <div v-if="answer.isAccepted" class="mt-4 text-emerald-500" title="该回答被提问者采纳">
-              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-            </div>
           </div>
 
           <!-- Right: Answer Content -->
@@ -463,11 +495,30 @@ const submitReport = () => {
               <button 
                 v-if="answer.author.name === profileName"
                 @click="doDeleteAnswer(answer.id)"
-                class="flex items-center gap-1 hover:text-red-500 transition-colors ml-auto text-red-400"
+                class="flex items-center gap-1 hover:text-red-500 transition-colors text-red-400"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 删除
               </button>
+              
+              <!-- 移动到右下角的点赞/踩控制区 -->
+              <div class="ml-auto flex items-center gap-3">
+                <button 
+                  @click="handleVote(answer, 1)"
+                  class="flex items-center gap-1.5 transition-colors text-sm"
+                  :class="answer.userVoted === 1 ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'"
+                >
+                  <ThumbsUp class="w-4 h-4" :class="answer.userVoted === 1 ? 'fill-current' : ''" />
+                  <span v-if="answer.points > 0" class="select-none">{{ answer.points }}</span>
+                </button>
+                <button 
+                  @click="handleVote(answer, -1)"
+                  class="flex items-center gap-1.5 transition-colors text-sm"
+                  :class="answer.userVoted === -1 ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'"
+                >
+                  <ThumbsDown class="w-4 h-4" :class="answer.userVoted === -1 ? 'fill-current' : ''" />
+                </button>
+              </div>
             </div>
 
             <!-- 评论区 -->
@@ -512,6 +563,25 @@ const submitReport = () => {
                     v-html="parseMarkdown(comment.content)"
                     @click="handleMarkdownClick"
                   ></div>
+                  <!-- 右下角点赞 -->
+                  <div class="flex justify-end mt-1 mb-1 gap-3">
+                    <button 
+                      @click="handleCommentLike(comment)"
+                      class="flex items-center gap-1 text-[11px] transition-colors"
+                      :class="comment.userLiked ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'"
+                    >
+                      <ThumbsUp class="w-3.5 h-3.5" :class="comment.userLiked ? 'fill-current' : ''" />
+                      <span v-if="comment.likes && comment.likes > 0" class="select-none">{{ comment.likes }}</span>
+                    </button>
+                    <!-- 踩 (非点赞不记录数量) -->
+                    <button 
+                      @click="handleCommentDislike(comment)"
+                      class="flex items-center gap-1 text-[11px] transition-colors"
+                      :class="comment.userDisliked ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'"
+                    >
+                      <ThumbsDown class="w-3.5 h-3.5" :class="comment.userDisliked ? 'fill-current' : ''" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -730,7 +800,6 @@ const submitReport = () => {
 }
 :deep(.comment-prose) pre code {
   background: transparent;
-  color: inherit;
   padding: 0;
   border-radius: 0;
 }

@@ -6,6 +6,9 @@ export interface Comment {
   author: { name: string; avatar: string }
   content: string
   createdAt: string
+  likes?: number
+  userLiked?: boolean
+  userDisliked?: boolean
 }
 
 export interface Answer {

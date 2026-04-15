@@ -1,15 +1,37 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import * as markedPkg from 'marked'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import * as DOMPurifyPkg from 'dompurify'
-import { getArticleById, deleteArticle, incrementArticleViews } from '../store/articles'
+import { getArticleById, deleteArticle, incrementArticleViews, type ArticleComment } from '../store/articles'
 import { isCollected, addCollection, removeCollection } from '../store/collections'
 import { addNotification } from '../store/notifications'
+import { ThumbsUp, ThumbsDown } from 'lucide-vue-next'
+import { markedHighlight } from 'marked-highlight'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github-dark.css'
+import { Marked } from 'marked'
 
-const marked = markedPkg.marked || markedPkg
+const markedInstance = new Marked()
+
+markedInstance.use(markedHighlight({
+  emptyLangClass: 'hljs',
+  langPrefix: 'hljs language-',
+  highlight(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value
+    }
+    return hljs.highlightAuto(code, ['javascript', 'typescript', 'html', 'css', 'python', 'java', 'c++']).value
+  }
+}))
+
 const DOMPurify = DOMPurifyPkg.default || DOMPurifyPkg
 
+const parseMarkdown = (raw: string) => {
+  if (!raw) return ''
+  const withMentions = raw.replace(/(^|\s)(@[^\s]+)/g, '$1<a href="/profile" class="mention-link">$2</a>')
+  return DOMPurify.sanitize(markedInstance.parse(withMentions, { breaks: true, gfm: true }) as string, { ADD_ATTR: ['class', 'target'] })
+}
 const route = useRoute()
 const router = useRouter()
 const articleId = route.params.id as string
@@ -28,10 +50,14 @@ if (article.value) {
 const formatDate = (str: string) => str.slice(0, 16)
 
 const doDelete = () => {
-  if (confirm('确定要删除这篇文章吗？')) {
+  ElMessageBox.confirm('确定要删除这篇文章吗？此操作不可恢复。', '删除文章', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
     deleteArticle(articleId)
     router.push('/')
-  }
+  }).catch(() => {})
 }
 
 // Collection state
@@ -110,7 +136,7 @@ const submitReport = () => {
     isRead: false
   })
 
-  alert('举报已成功提交，感谢您的反馈，工作人员将尽快处理！')
+  ElMessage.success('举报已提交，感谢您的反馈！')
   showReportModal.value = false
 }
 
@@ -135,6 +161,9 @@ const submitComment = () => {
       avatar: savedProfile ? JSON.parse(savedProfile).avatarUrl || 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' : 'https://api.dicebear.com/7.x/notionists/svg?seed=Me&scale=200' 
     },
     content: commentInput.value,
+    likes: 0,
+    userLiked: false,
+    userDisliked: false,
     createdAt
   })
 
@@ -155,8 +184,42 @@ const submitComment = () => {
 
 const deleteComment = (commentId: string) => {
   if (!article.value || !article.value.comments) return
-  if (confirm('确定要删除这条评论吗？')) {
-    article.value.comments = article.value.comments.filter(c => String(c.id) !== String(commentId))
+  ElMessageBox.confirm('确定要删除这条评论吗？', '删除评论', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    article.value!.comments = article.value!.comments!.filter(c => String(c.id) !== String(commentId))
+    ElMessage.success('评论已删除')
+  }).catch(() => {})
+}
+
+const handleCommentLike = (comment: ArticleComment) => {
+  if (comment.likes === undefined) {
+    comment.likes = 0
+    comment.userLiked = false
+  }
+  if (comment.userLiked) {
+    comment.likes = (comment.likes ?? 1) - 1
+    comment.userLiked = false
+  } else {
+    comment.likes = (comment.likes ?? 0) + 1
+    comment.userLiked = true
+    if (comment.userDisliked) {
+      comment.userDisliked = false
+    }
+  }
+}
+
+const handleCommentDislike = (comment: ArticleComment) => {
+  if (comment.userDisliked) {
+    comment.userDisliked = false
+  } else {
+    comment.userDisliked = true
+    if (comment.userLiked) {
+      comment.likes = (comment.likes ?? 1) - 1
+      comment.userLiked = false
+    }
   }
 }
 
@@ -169,11 +232,7 @@ const replyToComment = (authorName: string) => {
   })
 }
 
-const parseMarkdown = (raw: string) => {
-  if (!raw) return ''
-  const withMentions = raw.replace(/(^|\s)(@[^\s]+)/g, '$1<a href="/profile" class="mention-link">$2</a>')
-  return DOMPurify.sanitize(marked.parse(withMentions, { breaks: true, gfm: true }) as string, { ADD_ATTR: ['class', 'target'] })
-}
+
 
 const handleMarkdownClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement
@@ -188,7 +247,7 @@ const handleMarkdownClick = (e: MouseEvent) => {
 <template>
   <div class="animate-fade-in w-full pb-20">
     <!-- Not found -->
-    <div v-if="!article" class="max-w-3xl mx-auto px-4 py-20 text-center text-gray-400">
+    <div v-if="!article" class="w-full mx-auto px-4 py-20 text-center text-gray-400">
       <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
@@ -199,7 +258,7 @@ const handleMarkdownClick = (e: MouseEvent) => {
     <template v-else>
       <!-- Article Header -->
       <div class="bg-white border-b border-gray-200 shadow-sm px-4 py-10 sm:px-8 mb-8">
-        <div class="max-w-3xl mx-auto">
+        <div class="w-full mx-auto">
           <!-- Tags -->
           <div class="flex flex-wrap gap-2 mb-4">
             <span
@@ -257,7 +316,7 @@ const handleMarkdownClick = (e: MouseEvent) => {
       </div>
 
       <!-- Article Body -->
-      <div class="max-w-3xl mx-auto px-4 sm:px-8 mb-8">
+      <div class="w-full mx-auto px-4 sm:px-8 mb-8">
         <div
           class="bg-white rounded-xl border border-gray-100 shadow-sm px-6 sm:px-10 py-8 prose max-w-none text-slate-800 leading-relaxed text-[15px] break-words article-prose"
           v-html="parseMarkdown(article.content)"
@@ -266,7 +325,7 @@ const handleMarkdownClick = (e: MouseEvent) => {
       </div>
 
       <!-- Comments Section -->
-      <div class="max-w-3xl mx-auto px-4 sm:px-8">
+      <div class="w-full mx-auto px-4 sm:px-8">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 sm:p-8">
           <h2 class="text-xl font-bold text-slate-800 mb-6">{{ article.comments?.length || 0 }} 条评论</h2>
 
@@ -305,9 +364,29 @@ const handleMarkdownClick = (e: MouseEvent) => {
                   v-html="parseMarkdown(comment.content)"
                   @click="handleMarkdownClick"
                 ></div>
-                <div class="mt-2 flex items-center gap-3">
-                  <button @click="replyToComment(comment.author.name)" class="text-xs text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity">回复</button>
-                  <button v-if="comment.author.name === profileName" @click="deleteComment(comment.id)" class="text-xs text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity">删除</button>
+                <div class="mt-2 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <button @click="replyToComment(comment.author.name)" class="text-xs text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity">回复</button>
+                    <button v-if="comment.author.name === profileName" @click="deleteComment(comment.id)" class="text-xs text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity">删除</button>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <button 
+                      @click="handleCommentLike(comment)"
+                      class="flex items-center gap-1 text-[11px] transition-colors"
+                      :class="comment.userLiked ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'"
+                    >
+                      <ThumbsUp class="w-3.5 h-3.5" :class="comment.userLiked ? 'fill-current' : ''" />
+                      <span v-if="comment.likes && comment.likes > 0" class="select-none">{{ comment.likes }}</span>
+                    </button>
+                    <!-- 踩 (无数量展示) -->
+                    <button 
+                      @click="handleCommentDislike(comment)"
+                      class="flex items-center gap-1 text-[11px] transition-colors"
+                      :class="comment.userDisliked ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'"
+                    >
+                      <ThumbsDown class="w-3.5 h-3.5" :class="comment.userDisliked ? 'fill-current' : ''" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </li>
@@ -470,7 +549,6 @@ const handleMarkdownClick = (e: MouseEvent) => {
 }
 :deep(.article-comment-prose) pre code {
   background: transparent;
-  color: inherit;
   padding: 0;
   border-radius: 0;
 }

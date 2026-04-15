@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="dkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="dkLight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA" />
+      <stop offset="100%" stop-color="#818CF8" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="60" fill="url(#dkGrad)" />
+  <path d="M128 50 L210 95 L128 140 L46 95 Z" fill="url(#dkLight)" opacity="0.95" />
+  <path d="M46 140 L128 185 L210 140" stroke="white" stroke-width="18" stroke-linejoin="round" fill="none" opacity="0.85" />
+  <path d="M46 185 L128 230 L210 185" stroke="#93C5FD" stroke-width="18" stroke-linejoin="round" fill="none" opacity="0.6" />
+  <circle cx="128" cy="95" r="18" fill="white" />
+</svg>

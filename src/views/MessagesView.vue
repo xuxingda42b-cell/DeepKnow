@@ -1,5 +1,5 @@
 <template>
-  <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+  <div class="py-8 px-4 sm:px-6 lg:px-8 w-full">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row min-h-[600px] max-h-[80vh]">
       
       <!-- 左侧边栏导航 -->

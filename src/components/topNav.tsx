@@ -2,6 +2,7 @@ import { defineComponent, ref, watch } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { isLoggedIn, logout } from '../store/user'
 import { hasGlobalUnread } from '../store/notifications'
+import { ElMessageBox, ElMessage } from 'element-plus'
 
 export const TopNav = defineComponent({
   name: 'TopNav',
@@ -37,35 +38,51 @@ export const TopNav = defineComponent({
     }
 
     updateAvatar()
-    watch(() => route.path, updateAvatar)
+
+    const avatarMenuOpen = ref(false)
+
+    watch(() => route.path, () => {
+      updateAvatar()
+      avatarMenuOpen.value = false
+    })
 
     const handleLogout = () => {
-      if (window.confirm('确定要退出登录吗？')) {
+      ElMessageBox.confirm('确定要退出登录吗？', '退出登录', {
+        confirmButtonText: '退出',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
         logout()
         router.push('/')
-      }
+        ElMessage.success('已退出登录')
+      }).catch(() => { })
     }
 
     return () => (
       <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div class="w-full px-6 h-14 flex items-center justify-between">
           {/* Logo / Brand & Nav Links */}
           <div class="flex items-center gap-4 sm:gap-8">
-            <div class="flex items-center gap-2">
-              <div class="w-36 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl shadow-sm">
-                DeepKnow
+            <RouterLink to="/" class="flex items-center gap-2.5 cursor-pointer group">
+              <div class="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
+                <img src="/logo.svg" alt="DeepKnow Logo" class="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300" />
               </div>
-              <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 hidden sm:block tracking-tight">
-                知渊
-              </span>
-            </div>
+              <div class="flex-col justify-center hidden sm:flex">
+                <div class="flex items-baseline gap-1">
+                  <span class="text-xl font-extrabold tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 group-hover:from-blue-600 group-hover:to-indigo-500 transition-all">
+                    DeepKnow
+                  </span>
+                </div>
+                <span class="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase mt-0.5 ml-[1px]">知渊问答</span>
+              </div>
+            </RouterLink>
 
             {/* Main Navigation */}
-            <nav class="hidden md:flex items-center gap-1">
+            <nav class="flex items-center gap-1">
               <RouterLink
                 to="/"
                 exactActiveClass="text-blue-700 bg-blue-50 font-semibold"
-                class="px-4 py-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-[15px] font-medium"
+                class="px-2 sm:px-4 py-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-[15px] font-medium shrink-0"
               >
                 首页
               </RouterLink>
@@ -119,18 +136,33 @@ export const TopNav = defineComponent({
                 </RouterLink>
 
                 {/* Avatar Dropdown */}
-                <div class="relative group py-2 flex items-center">
+                <div class="relative py-2 flex items-center">
                   <img
-                    class="h-8 w-8 rounded-full border border-gray-200 cursor-pointer object-cover group-hover:ring-2 group-hover:ring-blue-500 group-hover:ring-offset-2 transition-all bg-gray-50 ml-1"
+                    onClick={() => avatarMenuOpen.value = !avatarMenuOpen.value}
+                    class="h-8 w-8 rounded-full border border-gray-200 cursor-pointer object-cover hover:ring-2 hover:ring-blue-500 transition-all bg-gray-50 ml-1"
                     src={avatarUrl.value}
                     alt="Admin avatar"
                   />
 
-                  {/* Invisible bridge to keep hover active between avatar and menu */}
-                  <div class="absolute top-[32px] right-0 w-full h-4"></div>
+                  {/* Backdrop for mobile closing */}
+                  {avatarMenuOpen.value && (
+                    <div class="fixed inset-0 z-40" onClick={() => avatarMenuOpen.value = false}></div>
+                  )}
 
-                  <div class="absolute right-0 top-[40px] w-32 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
-                    <div class="py-1.5">
+                  {/* Dropdown Menu */}
+                  <div class={`absolute right-0 top-[40px] w-32 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 transition-all duration-200 transform origin-top-right z-50 ${avatarMenuOpen.value ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'}`}>
+                    <div class="py-1.5" onClick={() => avatarMenuOpen.value = false}>
+                      <RouterLink to="/" class="block sm:hidden px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
+                        返回首页
+                      </RouterLink>
+                      <RouterLink to="/ask" class="block sm:hidden px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
+                        提出问题
+                      </RouterLink>
+                      <RouterLink to="/article/write" class="block sm:hidden px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
+                        写文章
+                      </RouterLink>
+                      <div class="h-px bg-gray-100 my-1 sm:hidden"></div>
+
                       <RouterLink to="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
                         个人主页
                       </RouterLink>
@@ -155,18 +187,21 @@ export const TopNav = defineComponent({
                 </div>
               </>
             ) : (
-              <RouterLink to="/login" class="flex items-center gap-3 group cursor-pointer p-1 -mr-1 rounded-full hover:bg-gray-50 transition-colors">
-                <div class="flex items-center gap-1.5 text-sm text-gray-600 group-hover:text-blue-600 transition-colors pl-2">
+
+              <div class="flex items-center gap-3 p-1 -mr-1 rounded-full hover:bg-gray-50 transition-colors">
+                <RouterLink to="/login" class="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors pl-2">
                   <span class="font-medium">登录</span>
-                  <span class="text-gray-300">/</span>
+                </RouterLink>
+                <span class="text-gray-300">/</span>
+                <RouterLink to="/register" class="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors pl-2">
                   <span class="font-medium">注册</span>
-                </div>
+                </RouterLink>
                 <img
-                  class="h-8 w-8 rounded-full border border-gray-200 object-cover group-hover:ring-2 group-hover:ring-blue-500 group-hover:ring-offset-2 transition-all bg-gray-50"
+                  class="h-8 w-8 rounded-full border border-gray-200 object-cover hover:ring-2 hover:ring-blue-500 hover:ring-offset-2 transition-all bg-gray-50 cursor-pointer"
                   src="https://api.dicebear.com/7.x/avataaars/svg?seed=Guest"
                   alt="Guest avatar"
                 />
-              </RouterLink>
+              </div>
             )}
           </div>
         </div>

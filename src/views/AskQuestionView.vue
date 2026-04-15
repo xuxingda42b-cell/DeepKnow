@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { myQuestions, addQuestion } from '../store/questions'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 
@@ -103,8 +104,7 @@ const submitQuestion = () => {
   }
 
   addQuestion(newQuestion)
-  
-  alert('问题发布成功！即将跳转到首页...')
+  ElMessage.success('问题发布成功！')
   router.push('/')
 }
 </script>
