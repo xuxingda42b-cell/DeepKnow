@@ -9,12 +9,14 @@
 
     <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
       <div class="p-8">
-        <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30">
-            Q&A
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900">欢迎来到问答社区</h2>
-          <p class="text-gray-500 mt-2 text-sm">登录或注册以继续与大家交流</p>
+        <div class="text-center mb-8 flex flex-col items-center">
+          <img src="/logo.svg" alt="DeepKnow Logo" class="w-20 h-20 object-contain drop-shadow-md mb-4 hover:scale-105 transition-transform duration-300" />
+          <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center justify-center gap-2">
+            欢迎来到 
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600">DeepKnow</span>
+          </h2>
+          <p class="text-[12px] font-bold text-gray-400 tracking-[0.2em] uppercase mt-1">知渊问答</p>
+          <p class="text-gray-500 mt-3 text-sm">登录或注册以继续与大家交流</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-5">
